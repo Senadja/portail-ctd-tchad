@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://ctd_user:ctd_password@db:5432/ctd_db
+      - JWT_SECRET=super-secret-ctd-key-change-in-prod
+      - FRONTEND_URL=https://portail-ctd-tchad.vercel.app
+      - PORT=3000
+    depends_on:
+      - db
+    volumes:
+      - ./uploads:/app/uploads
+
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=ctd_user
+      - POSTGRES_PASSWORD=ctd_password
+      - POSTGRES_DB=ctd_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

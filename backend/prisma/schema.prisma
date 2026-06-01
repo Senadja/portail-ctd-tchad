@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  role      String   @default("ADMIN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  content     String   @db.Text
+  excerpt     String?  @db.Text
+  author      String?  @default("CTD")
+  image       String?
+  category    String   @default("Actualité")
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  title       String
+  description String?  @db.Text
+  fileUrl     String
+  fileSize    String?
+  fileType    String   // PDF, DOC, etc.
+  category    String   @default("Public")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Tender {
+  id          String   @id @default(cuid())
+  reference   String   @unique
+  title       String
+  description String   @db.Text
+  status      String   @default("En cours")
+  deadline    DateTime
+  fileUrl     String?
+
+  // Soumissions en ligne
+  acceptSubmissions  Boolean   @default(false)
+  submissionDeadline DateTime?
+
+  // Statuts custom JSON: [{ key, label, color, order }]
+  customStatuses     String?   @db.Text
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  submissions TenderSubmission[]
+}
+
+model TenderSubmission {
+  id             String   @id @default(cuid())
+  tenderId       String
+
+  // Identité soumissionnaire
+  structureName  String
+  legalRep       String
+  legalRepRole   String?
+  email          String
+  phone          String?
+  country        String?
+  city           String?
+
+  // Offre
+  proposedAmount Float?           // FCFA, optionnel
+  message        String?  @db.Text
+
+  // Documents: [{ name, url, size, mimeType }]
+  documents      Json     @default("[]")
+
+  // Amendements : 0 = offre initiale, 1 ou 2 = amendement
+  submissionRound Int     @default(0)
+
+  // Workflow admin
+  status         String   @default("REÇUE")
+  // REÇUE, EN_EVALUATION, RETENUE, REJETÉE
+
+  submittedAt    DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tender         Tender   @relation(fields: [tenderId], references: [id], onDelete: Cascade)
+}
+
+model FormSubmission {
+  id        String   @id @default(cuid())
+  type      String   // CONTACT, INVESTOR
+  data      Json     // Stockage flexible des champs du formulaire
+  status    String   @default("NOUVEAU") // NOUVEAU, LU, TRAITÉ
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Settings {
+  id            String @id @default("global")
+  siteName      String @default("Portail CTD")
+  contactEmail  String?
+  contactPhone  String?
+  address       String? @db.Text
+  facebookUrl   String?
+  linkedinUrl   String?
+
+  // Barre supérieure du header
+  headerTitle   String? @default("République du Tchad — Présidence de la République")
+
+  // Section Hero (bannière d'accueil)
+  heroTitle      String? @default("Commission Technique du Désengagement")
+  heroSubtitle   String? @default("Bienvenue sur le portail officiel de la Commission Technique du Désengagement.")
+  heroImage      String?
+  heroBadge      String? @default("Investissez au Tchad")
+  heroCta1Label  String? @default("Découvrir la Commission")
+  heroCta2Label  String? @default("Devenir investisseur")
+
+  // Section "Qui sommes-nous"
+  aboutSectionLabel  String? @default("Qui sommes-nous")
+  aboutTitle         String? @default("Au cœur de la modernisation économique du Tchad")
+  aboutDescription   String? @db.Text @default("La Commission Technique du Désengagement (CTD) de la République du Tchad est la structure chargée d'accompagner et de piloter le processus de désengagement de l'État du capital des entreprises publiques et parapubliques.")
+  aboutCtaLabel      String? @default("Découvrir la CTD")
+  aboutImage1        String?
+  aboutImage2        String?
+  // Piliers JSON: [{ icon: "Target", title: "...", description: "..." }]
+  aboutPillars       String? @db.Text
+
+  // Mot du Président
+  presidentName    String?
+  presidentTitle   String? @default("Président de la CTD")
+  presidentMessage String? @db.Text
+  presidentImage   String?
+
+  // Configuration des statuts pour Appels d'offres
+  // Format JSON: [{ label: "Ouvert", color: "#10b981", percentage: 25 }]
+  tenderStatuses   String? @db.Text
+
+  // Flash Infos pour la bande défilante
+  // Format JSON: [{ severity: "info"|"warning"|"danger"|"success", label: "...", text: "..." }]
+  flashInfos       String? @db.Text
+
+  updatedAt     DateTime @updatedAt
+}
+
+// Médiathèque — tous les fichiers uploadés
+model MediaFile {
+  id        String   @id @default(cuid())
+  filename  String
+  url       String
+  mimeType  String
+  size      Int      // octets
+  alt       String?  // texte alternatif
+  createdAt DateTime @default(now())
+}
+
+
+model PageContent {
+  id        String   @id
+  title     String
+  sections  Json     @default("{} ")
+  updatedAt DateTime @updatedAt
+}
