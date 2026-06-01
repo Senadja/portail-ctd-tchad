@@ -5,7 +5,7 @@ services:
     build: .
     restart: always
     ports:
-      - "3000:3000"
+      - "80:3000"
     environment:
       - DATABASE_URL=postgresql://ctd_user:ctd_password@db:5432/ctd_db
       - JWT_SECRET=super-secret-ctd-key-change-in-prod
