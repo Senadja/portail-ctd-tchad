@@ -33,11 +33,8 @@ function HeroSection({ go, openArticle, openTender, articles, tenders }) {
               <h1>{heroContent.title}</h1>
               <p>{heroContent.subtitle}</p>
               <div className="hero-actions">
-                <button className="btn btn-gold" onClick={() => go('appels-offres')}>
-                  Appels d'offres <Icon.arrowRight />
-                </button>
-                <button className="btn btn-outline" style={{borderColor:'rgba(255,255,255,0.5)', color:'white', background:'transparent'}} onClick={() => go('investisseurs')}>
-                  Espace Investisseurs
+                <button className="btn btn-gold" onClick={() => go('institution-presentation')}>
+                  Découvrir la Commission <Icon.arrowRight />
                 </button>
               </div>
             </div>
