@@ -13,12 +13,12 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5015',
+        target: 'http://188.165.77.237:5015',
         changeOrigin: true,
         secure: false,
       },
       '/uploads': {
-        target: 'http://localhost:5015',
+        target: 'http://188.165.77.237:5015',
         changeOrigin: true,
         secure: false,
       },
