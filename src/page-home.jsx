@@ -34,7 +34,7 @@ function HeroSection({ go, openArticle, openTender, articles, tenders }) {
               <p>{heroContent.subtitle}</p>
               <div className="hero-actions">
                 <button className="btn btn-gold" onClick={() => go('institution-presentation')}>
-                  Découvrir la Commission <Icon.arrowRight />
+                  Voir plus <Icon.arrowRight />
                 </button>
               </div>
             </div>
@@ -89,7 +89,7 @@ function KeyFiguresSection({ go }) {
             <h3>{aboutContent.title}</h3>
             <p>{aboutContent.description}</p>
             <button className="btn btn-outline" style={{marginTop:20}} onClick={() => go('institution-presentation')}>
-              Découvrir la Commission <Icon.arrowRight />
+              Voir plus <Icon.arrowRight />
             </button>
           </div>
           <div className="mission-right">
