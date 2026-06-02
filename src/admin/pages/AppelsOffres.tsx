@@ -10,6 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Search, Edit2, Trash2, X, Loader2, Gavel, Calendar, Settings as SettingsIcon, Upload, FileText, GripVertical } from "lucide-react";
 import { useToast } from "@admin/hooks/use-toast";
 
+interface Stage {
+  id: string;
+  label: string;
+  start: string;
+  end: string;
+}
+
 interface Tender {
   id: string;
   reference: string;
@@ -18,6 +25,7 @@ interface Tender {
   status: string;
   deadline: string;
   fileUrl?: string;
+  customStatuses?: string; // Stored as JSON string
   createdAt: string;
 }
 
@@ -33,7 +41,15 @@ const defaultStatuses: TenderStatusConfig[] = [
   { label: "Attribué", color: "#3b82f6", percentage: 100 },
 ];
 
-type FormState = { reference: string; title: string; description: string; status: string; deadline: string; fileUrl: string };
+type FormState = { 
+  reference: string; 
+  title: string; 
+  description: string; 
+  status: string; 
+  deadline: string; 
+  fileUrl: string;
+  stages: Stage[];
+};
 
 const AdminAppelsOffres = () => {
   const { toast } = useToast();
@@ -104,13 +120,38 @@ const AdminAppelsOffres = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ reference: `AO-${Date.now().toString().slice(-6)}`, title: "", description: "", status: customStatuses[0]?.label || "En cours", deadline: "", fileUrl: "" });
+    setForm({ 
+      reference: `AO-${Date.now().toString().slice(-6)}`, 
+      title: "", 
+      description: "", 
+      status: customStatuses[0]?.label || "En cours", 
+      deadline: "", 
+      fileUrl: "",
+      stages: []
+    });
     setDrawerOpen(true);
   };
 
   const openEdit = (t: Tender) => {
+    let savedStages: Stage[] = [];
+    if (t.customStatuses) {
+      try {
+        savedStages = JSON.parse(t.customStatuses);
+      } catch (e) {
+        console.error("Failed to parse stages", e);
+      }
+    }
+
     setEditing(t);
-    setForm({ reference: t.reference, title: t.title, description: t.description, status: t.status, deadline: new Date(t.deadline).toISOString().split("T")[0], fileUrl: t.fileUrl || "" });
+    setForm({ 
+      reference: t.reference, 
+      title: t.title, 
+      description: t.description, 
+      status: t.status, 
+      deadline: new Date(t.deadline).toISOString().split("T")[0], 
+      fileUrl: t.fileUrl || "",
+      stages: savedStages
+    });
     setDrawerOpen(true);
   };
 
@@ -119,8 +160,15 @@ const AdminAppelsOffres = () => {
       toast({ title: "Champs requis", description: "Référence, titre et date limite sont obligatoires.", variant: "destructive" });
       return;
     }
-    if (editing) updateMutation.mutate({ id: editing.id, data: form });
-    else createMutation.mutate(form);
+
+    // On prépare les données en incluant les stages sous forme de chaîne JSON
+    const payload = {
+      ...form,
+      customStatuses: JSON.stringify(form.stages)
+    };
+
+    if (editing) updateMutation.mutate({ id: editing.id, data: payload as any });
+    else createMutation.mutate(payload as any);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -313,28 +361,81 @@ const AdminAppelsOffres = () => {
                   </div>
                   <Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={5} placeholder="Description détaillée de l'appel d'offres…" className="resize-none" />
                 </div>
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2"><FileText className="w-4 h-4" />Dossier d'appel d'offres (PDF)</Label>
-                  <div className="flex flex-col gap-2">
-                    {form.fileUrl && (
-                      <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200 text-sm">
-                        <FileText className="w-4 h-4 text-[#0D1F35] shrink-0" />
-                        <span className="flex-1 truncate text-gray-700 font-mono text-xs">{form.fileUrl.split('/').pop()}</span>
-                        <button onClick={() => setForm(f => ({ ...f, fileUrl: "" }))} className="text-red-400 hover:text-red-600"><X className="w-3.5 h-3.5" /></button>
-                      </div>
-                    )}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="gap-2 h-10 rounded-xl self-start"
-                      onClick={() => fileRef.current?.click()}
-                      disabled={uploadingFile}
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-bold text-[#0D1F35]">Phases de l'Appel d'Offres</Label>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setForm({ ...form, stages: [...form.stages, { id: Date.now().toString(), label: "Nouvelle phase", start: "", end: "" }] })}
+                      className="h-8 rounded-lg gap-1.5"
                     >
-                      {uploadingFile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                      {uploadingFile ? "Téléchargement..." : "Choisir depuis l'appareil"}
+                      <Plus className="w-3.5 h-3.5" /> Ajouter
                     </Button>
-                    <input ref={fileRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={handleFileUpload} />
                   </div>
+                  
+                  {form.stages.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                      <p className="text-xs text-gray-400">Aucune phase définie. Le cercle de progression sera vide.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {form.stages.map((stage, idx) => (
+                        <div key={stage.id} className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3 relative group">
+                          <button 
+                            onClick={() => setForm({ ...form, stages: form.stages.filter((_, i) => i !== idx) })}
+                            className="absolute top-2 right-2 p-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                          
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Libellé de la phase</Label>
+                            <Input 
+                              value={stage.label} 
+                              onChange={e => {
+                                const newStages = [...form.stages];
+                                newStages[idx].label = e.target.value;
+                                setForm({ ...form, stages: newStages });
+                              }}
+                              placeholder="ex: Réception des offres"
+                              className="h-9 bg-white"
+                            />
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">Début</Label>
+                              <Input 
+                                type="date" 
+                                value={stage.start} 
+                                onChange={e => {
+                                  const newStages = [...form.stages];
+                                  newStages[idx].start = e.target.value;
+                                  setForm({ ...form, stages: newStages });
+                                }}
+                                className="h-9 bg-white"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <Label className="text-xs">Fin</Label>
+                              <Input 
+                                type="date" 
+                                value={stage.end} 
+                                onChange={e => {
+                                  const newStages = [...form.stages];
+                                  newStages[idx].end = e.target.value;
+                                  setForm({ ...form, stages: newStages });
+                                }}
+                                className="h-9 bg-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="px-6 py-4 border-t bg-gray-50/50 flex items-center justify-between gap-3">
