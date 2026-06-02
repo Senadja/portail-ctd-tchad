@@ -76,12 +76,12 @@ function HeroSection({ go, openArticle, openTender, articles, tenders }) {
 function KeyFiguresSection({ go }) {
   const { data: page } = useApi(() => getPageContent('home'), []);
   const aboutContent = page?.sections?.about || {
-    title: 'Au cœur de la transformation économique du Tchad',
-    content: 'La CTD piloté le désengagement de l\'État en favorisant la compétitivité économique et l\'attractivité du Tchad pour les investisseurs.',
+    title: <><span style={{color: 'var(--gold)'}}>Au cœur de la transformation économique du Tchad</span></>,
+    content: "La Commission Technique du Désengagement de la République du Tchad est la structure chargée d'accompagner et de piloter le processus de désengagement de l'État du capital des entreprises publiques et parapubliques. Elle joue un rôle stratégique dans la mise en œuvre des politiques de privatisation, de restructuration et de partenariat avec le secteur privé.",
   };
 
   return (
-    <section className="section" style={{paddingTop: 16}} aria-label="Chiffres-clés de la CTD">
+    <section className="section" style={{paddingTop: 16}} aria-label="Chiffres-clés de la Commission">
       <div className="container">
         <div className="mission">
           <div className="mission-left">
@@ -89,7 +89,7 @@ function KeyFiguresSection({ go }) {
             <h3>{aboutContent.title}</h3>
             <p>{aboutContent.content}</p>
             <button className="btn btn-outline" style={{marginTop:20}} onClick={() => go('institution-presentation')}>
-              Découvrir la CTD <Icon.arrowRight />
+              Découvrir la Commission <Icon.arrowRight />
             </button>
           </div>
           <div className="mission-right">
