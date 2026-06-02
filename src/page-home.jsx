@@ -75,34 +75,6 @@ function HeroSection({ go, openArticle, openTender, articles, tenders }) {
   );
 }
 
-/* ─── Accès rapides ────────────────────────────────────────── */
-function QuickServicesSection({ go }) {
-  return (
-    <section className="qservices" aria-label="Services en accès rapide">
-      <div className="container">
-        <div className="qservices-grid">
-          {QUICK.map((q, i) => (
-            <button key={i} className="qsvc"
-              onClick={() => {
-                if (q.ic === 'track') go('tracker');
-                else if (q.ic === 'doc') go('appels-offres');
-                else if (q.ic === 'pay') go('investisseurs');
-                else if (q.ic === 'appoint') go('contact');
-                else go('services');
-              }}>
-              <div className="qsvc-ic">{Icon[q.ic] && Icon[q.ic]()}</div>
-              <div>
-                <h3>{q.title}</h3>
-                <p>{q.desc}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* ─── Chiffres-clés ────────────────────────────────────────── */
 function KeyFiguresSection({ go }) {
   const { data: page } = useApi(() => getPageContent('home'), []);
@@ -272,7 +244,6 @@ export function HomePage({ go, openArticle, openTender }) {
   return (
     <main id="main" className="page-enter">
       <HeroSection go={go} openArticle={openArticle} openTender={openTender} articles={articles} tenders={tenders} />
-      <QuickServicesSection go={go} />
       <KeyFiguresSection go={go} />
       <TendersSection go={go} tenders={tenders} />
       <ServicesSection go={go} />
