@@ -6,9 +6,9 @@ import { Icon } from './icons';
 
 const INSTITUTION_SUBPAGES = [
   { id: 'institution-presentation', label: 'Présentation', desc: 'La CTD, son rôle et sa vision' },
+  { id: 'institution-mot', label: 'Mot du Président', desc: 'Message officiel' },
   { id: 'institution-missions', label: 'Missions & Attributions', desc: '9 missions officielles' },
   { id: 'institution-structure', label: 'Organisation', desc: 'Organigramme institutionnel' },
-  { id: 'institution-mot', label: 'Mot du Président', desc: 'Message officiel' },
   { id: 'institution-historique', label: 'Historique', desc: 'Contexte et création de la CTD' },
 ];
 
