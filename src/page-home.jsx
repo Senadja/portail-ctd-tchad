@@ -74,10 +74,10 @@ function HeroSection({ go, openArticle, openTender, articles, tenders }) {
 
 /* ─── Chiffres-clés ────────────────────────────────────────── */
 function KeyFiguresSection({ go }) {
-  const { data: page } = useApi(() => getPageContent('home'), []);
-  const aboutContent = page?.sections?.about || {
-    title: <><span style={{color: 'var(--gold)'}}>Au cœur de la transformation économique du Tchad</span></>,
-    content: "La Commission Technique du Désengagement de la République du Tchad est la structure chargée d'accompagner et de piloter le processus de désengagement de l'État du capital des entreprises publiques et parapubliques. Elle joue un rôle stratégique dans la mise en œuvre des politiques de privatisation, de restructuration et de partenariat avec le secteur privé.",
+  // On ignore les données de l'API pour cette section afin de garantir le style et le texte souhaités par l'utilisateur
+  const aboutContent = {
+    title: <span style={{color: 'var(--gold)'}}>Au cœur de la transformation économique du Tchad</span>,
+    description: "La Commission Technique du Désengagement de la République du Tchad est la structure chargée d'accompagner et de piloter le processus de désengagement de l'État du capital des entreprises publiques et parapubliques. Elle joue un rôle stratégique dans la mise en œuvre des politiques de privatisation, de restructuration et de partenariat avec le secteur privé.",
   };
 
   return (
@@ -87,7 +87,7 @@ function KeyFiguresSection({ go }) {
           <div className="mission-left">
 
             <h3>{aboutContent.title}</h3>
-            <p>{aboutContent.content}</p>
+            <p>{aboutContent.description}</p>
             <button className="btn btn-outline" style={{marginTop:20}} onClick={() => go('institution-presentation')}>
               Découvrir la Commission <Icon.arrowRight />
             </button>
