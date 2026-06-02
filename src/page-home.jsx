@@ -6,6 +6,7 @@ import { NEWS, SERVICES, QUICK, PARTNERS, PROJECTS, KEY_FIGURES } from './data';
 import { getArticles, getTenders, getSettings, getPageContent, useApi } from './api';
 import { Icon } from './icons';
 import { Marquee } from './marquee';
+import { TenderRadialProgress } from './tender-progress';
 
 /* ─── Hero banner ─────────────────────────────────────────── */
 function HeroSection({ go, openArticle, openTender, articles, tenders }) {
@@ -128,24 +129,37 @@ function TendersSection({ go, tenders }) {
           </div>
         </div>
         <div className="tenders-list">
-          {displayTenders.map((t, i) => (
-            <article key={t.id || i} className="tender-row" onClick={() => go('appels-offres')}>
-              <div className="tender-ref">{t.reference || `AO-2026-00${i+1}`}</div>
-              <div className="tender-body">
-                <h3>{t.title}</h3>
-                <p>{t.description?.substring(0, 120)}…</p>
-              </div>
-              <div className="tender-meta">
-                <span className={`status-pill ${t.status === 'En cours' ? 'progress' : 'done'}`}>
-                  {t.status || 'En cours'}
-                </span>
-                <span className="tender-deadline">
-                  Clôture : {t.deadline ? new Date(t.deadline).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}) : 'À préciser'}
-                </span>
-              </div>
-              <Icon.arrowRight style={{width:18, height:18, flexShrink:0, color:'var(--ink-mute)'}} />
-            </article>
-          ))}
+          {displayTenders.map((t, i) => {
+            // Simulation d'étapes basées sur les dates (à remplacer par les vraies données de l'API)
+            const dummyStages = [
+              { id: 1, label: "Publication", start: "2024-05-01", end: "2024-05-10" },
+              { id: 2, label: "Réception", start: "2024-05-11", end: "2024-06-15" },
+              { id: 3, label: "Analyse", start: "2024-06-16", end: "2024-06-30" },
+              { id: 4, label: "Attribution", start: "2024-07-01", end: "2024-07-15" }
+            ];
+
+            return (
+              <article key={t.id || i} className="tender-row" onClick={() => go('appels-offres')}>
+                <div className="tender-progress-circle">
+                   <TenderRadialProgress stages={dummyStages} size={60} strokeWidth={5} />
+                </div>
+                <div className="tender-body">
+                  <div className="tender-ref">{t.reference || `AO-2026-00${i+1}`}</div>
+                  <h3>{t.title}</h3>
+                  <p>{t.description?.substring(0, 120)}…</p>
+                </div>
+                <div className="tender-meta" style={{alignItems: 'flex-end'}}>
+                  <span className="tender-deadline">
+                    Clôture : {t.deadline ? new Date(t.deadline).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}) : 'À préciser'}
+                  </span>
+                  <div style={{fontSize: 11, color: 'var(--gold)', marginTop: 4, fontWeight: 500}}>
+                    Phase actuelle : Réception des plis
+                  </div>
+                </div>
+                <Icon.arrowRight style={{width:18, height:18, flexShrink:0, color:'var(--ink-mute)', marginLeft: 15}} />
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>
