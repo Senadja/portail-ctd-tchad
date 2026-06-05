@@ -447,26 +447,29 @@ const AdminParametres = () => {
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100/80 p-1 rounded-xl overflow-x-auto scrollbar-hide">
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
-              tab === t.id
-                ? "bg-white text-[#0D1F35] shadow-sm"
-                : "text-gray-400 hover:text-gray-700"
-            }`}
-          >
-            <t.icon className="w-3.5 h-3.5" />
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {/* Layout: sidebar nav + panel */}
+      <div className="flex gap-4 items-start">
+
+        {/* Vertical sidebar nav */}
+        <div className="shrink-0 w-44 flex flex-col gap-0.5 bg-white rounded-2xl border border-gray-200 shadow-sm p-2">
+          {TABS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-left transition-all ${
+                tab === t.id
+                  ? "bg-[#0D1F35] text-white shadow-sm"
+                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+              }`}
+            >
+              <t.icon className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{t.label}</span>
+            </button>
+          ))}
+        </div>
 
       {/* Panel */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden min-w-0">
         <div className="p-6 md:p-8 space-y-6">
 
           {/* ── HERO & IDENTITÉ ─────────────────────────────────── */}
@@ -662,22 +665,47 @@ const AdminParametres = () => {
           {tab === "organigramme" && (
             <>
               <div className="pb-4 border-b border-gray-100">
-                <h2 className="font-semibold text-gray-900">Organigramme — Structure de la CTD</h2>
-                <p className="text-sm text-gray-500 mt-0.5">Modifiez les informations de chaque direction affichées dans la page Organisation de la CTD.</p>
+                <h2 className="font-semibold text-gray-900 text-lg">Organigramme — Structure de la CTD</h2>
+                <p className="text-sm text-gray-500 mt-1">Modifiez le nom, le rôle et la description de chaque direction. Les changements s’affichent dans la popup de la page Organisation.</p>
               </div>
-              <div className="space-y-4">
+
+              <div className="space-y-3">
                 {form.directions.map((dir, idx) => (
-                  <div key={idx} className="border border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/50">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Building2 className="w-4 h-4 text-[#0D1F35]/50" />
-                      <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                        {dir.isTop ? "Direction principale" : "Direction"}
-                      </span>
+                  <div
+                    key={idx}
+                    className={`rounded-2xl border p-5 transition-all ${
+                      dir.isTop
+                        ? "border-amber-200 bg-amber-50/40"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                    }`}
+                  >
+                    {/* Card header */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black ${
+                        dir.isTop
+                          ? "bg-amber-400/20 text-amber-700"
+                          : "bg-[#0D1F35]/8 text-[#0D1F35]/60"
+                      }`}>
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1">
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                          dir.isTop
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-gray-100 text-gray-500"
+                        }`}>
+                          <Building2 className="w-2.5 h-2.5" />
+                          {dir.isTop ? "Direction principale" : "Direction"}
+                        </span>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Field label="Nom de la direction">
-                        <input
-                          className="w-full h-10 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0D1F35]/20"
+
+                    {/* Fields */}
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Nom de la direction</label>
+                        <Input
+                          className="h-10 text-sm rounded-xl border-gray-200 focus:border-[#0D1F35] focus:ring-[#0D1F35]/10"
                           value={dir.name}
                           onChange={e => {
                             const updated = [...form.directions];
@@ -686,10 +714,11 @@ const AdminParametres = () => {
                             setDirty(true);
                           }}
                         />
-                      </Field>
-                      <Field label="Rôle / Titre">
-                        <input
-                          className="w-full h-10 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0D1F35]/20"
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Rôle / Intitulé</label>
+                        <Input
+                          className="h-10 text-sm rounded-xl border-gray-200 focus:border-[#0D1F35] focus:ring-[#0D1F35]/10"
                           value={dir.role}
                           onChange={e => {
                             const updated = [...form.directions];
@@ -698,12 +727,14 @@ const AdminParametres = () => {
                             setDirty(true);
                           }}
                         />
-                      </Field>
+                      </div>
                     </div>
-                    <Field label="Description (visible dans la popup)">
-                      <textarea
-                        rows={3}
-                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#0D1F35]/20"
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Description affichée dans la popup</label>
+                      <Textarea
+                        rows={2}
+                        className="text-sm resize-none rounded-xl border-gray-200 focus:border-[#0D1F35] focus:ring-[#0D1F35]/10"
                         value={dir.desc}
                         onChange={e => {
                           const updated = [...form.directions];
@@ -712,7 +743,7 @@ const AdminParametres = () => {
                           setDirty(true);
                         }}
                       />
-                    </Field>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -740,6 +771,8 @@ const AdminParametres = () => {
           </Button>
         </div>
       </div>
+
+      </div> {/* end layout flex */}
     </div>
   );
 };
