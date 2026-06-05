@@ -8,7 +8,7 @@ import { Textarea } from "@admin/components/ui/textarea";
 import { useToast } from "@admin/hooks/use-toast";
 import {
   Save, Building2, Phone, Mail, Globe, Loader2,
-  Layout, Info, Link as LinkIcon, Plus, Trash2, Upload, ImageIcon, Zap, GripVertical,
+  Layout, Info, Link as LinkIcon, Plus, Trash2, Upload, ImageIcon, Zap, GripVertical, Users,
 } from "lucide-react";
 import { IconPicker } from "@admin/components/admin/IconPicker";
 import {
@@ -62,9 +62,18 @@ interface FullSettings {
   facebookUrl: string;
   // Flash Infos
   flashInfos: FlashInfo[];
+  // Organigramme
+  directions: Direction[];
 }
 
-import { FLASH_INFOS } from "../../data";
+interface Direction {
+  name: string;
+  role: string;
+  desc: string;
+  isTop?: boolean;
+}
+
+import { FLASH_INFOS, DIRECTIONS as DEFAULT_DIRECTIONS } from "../../data";
 
 const EMPTY: FullSettings = {
   siteName: "Commission Technique du Désengagement",
@@ -88,6 +97,7 @@ const EMPTY: FullSettings = {
   linkedinUrl: "",
   facebookUrl: "",
   flashInfos: FLASH_INFOS,
+  directions: DEFAULT_DIRECTIONS,
 };
 
 const SEVERITY_OPTIONS = [
@@ -158,7 +168,8 @@ const TABS = [
   { id: "about",      label: "Qui sommes-nous", icon: Info },
   { id: "contact",    label: "Contact",         icon: Phone },
   { id: "social",     label: "Réseaux",         icon: LinkIcon },
-  { id: "flashinfos", label: "Flash Infos",     icon: Zap },
+  { id: "flashinfos",  label: "Flash Infos",    icon: Zap },
+  { id: "organigramme",label: "Organigramme",   icon: Users },
 ] as const;
 type TabId = typeof TABS[number]["id"];
 
@@ -389,6 +400,7 @@ const AdminParametres = () => {
         ...data,
         aboutPillars: JSON.stringify(data.aboutPillars),
         flashInfos:   JSON.stringify(data.flashInfos),
+        directions:   JSON.stringify(data.directions),
       };
       return api.put("/settings", payload);
     },
@@ -644,6 +656,67 @@ const AdminParametres = () => {
           {/* ── FLASH INFOS ──────────────────────────────────────────── */}
           {tab === "flashinfos" && (
             <FlashInfosPanel form={form} setForm={setForm} setDirty={setDirty} />
+          )}
+
+          {/* ── ORGANIGRAMME ─────────────────────────────────────────── */}
+          {tab === "organigramme" && (
+            <>
+              <div className="pb-4 border-b border-gray-100">
+                <h2 className="font-semibold text-gray-900">Organigramme — Structure de la CTD</h2>
+                <p className="text-sm text-gray-500 mt-0.5">Modifiez les informations de chaque direction affichées dans la page Organisation de la CTD.</p>
+              </div>
+              <div className="space-y-4">
+                {form.directions.map((dir, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/50">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Building2 className="w-4 h-4 text-[#0D1F35]/50" />
+                      <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                        {dir.isTop ? "Direction principale" : "Direction"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field label="Nom de la direction">
+                        <input
+                          className="w-full h-10 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0D1F35]/20"
+                          value={dir.name}
+                          onChange={e => {
+                            const updated = [...form.directions];
+                            updated[idx] = { ...updated[idx], name: e.target.value };
+                            setForm(f => ({ ...f, directions: updated }));
+                            setDirty(true);
+                          }}
+                        />
+                      </Field>
+                      <Field label="Rôle / Titre">
+                        <input
+                          className="w-full h-10 px-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0D1F35]/20"
+                          value={dir.role}
+                          onChange={e => {
+                            const updated = [...form.directions];
+                            updated[idx] = { ...updated[idx], role: e.target.value };
+                            setForm(f => ({ ...f, directions: updated }));
+                            setDirty(true);
+                          }}
+                        />
+                      </Field>
+                    </div>
+                    <Field label="Description (visible dans la popup)">
+                      <textarea
+                        rows={3}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#0D1F35]/20"
+                        value={dir.desc}
+                        onChange={e => {
+                          const updated = [...form.directions];
+                          updated[idx] = { ...updated[idx], desc: e.target.value };
+                          setForm(f => ({ ...f, directions: updated }));
+                          setDirty(true);
+                        }}
+                      />
+                    </Field>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
         </div>

@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { MISSIONS_CTD, DIRECTIONS } from './data';
-import { getPageContent, useApi } from './api';
+import { getPageContent, getSettings, useApi } from './api';
 import { Icon } from './icons';
 
 /* ─── Bannière de page commune ──────────────────────────── */
@@ -209,71 +209,96 @@ export function MissionsPage({ go }) {
    STRUCTURE ORGANISATIONNELLE CTD
    ═══════════════════════════════════════════════════════════ */
 export function StructurePage({ go }) {
-  const topLevel = DIRECTIONS.filter(d => d.isTop);
-  const secondLevel = DIRECTIONS.filter(d => !d.isTop && ['Comité de Pilotage', 'Secrétariat Technique'].includes(d.name));
-  const directions = DIRECTIONS.filter(d => !d.isTop && !['Comité de Pilotage', 'Secrétariat Technique'].includes(d.name));
+  const [selected, setSelected] = React.useState(null);
+
+  // Charger les directions depuis l'API settings (fallback sur les données statiques)
+  const { data: settings } = useApi(() => getSettings(), []);
+  const dirs = React.useMemo(() => {
+    try {
+      const raw = settings?.directions;
+      if (!raw) return DIRECTIONS;
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : DIRECTIONS;
+    } catch { return DIRECTIONS; }
+  }, [settings]);
+
+  const topLevel    = dirs.filter(d => d.isTop);
+  const secondLevel = dirs.filter(d => !d.isTop && ['Comité de Pilotage', 'Secrétariat Technique'].includes(d.name));
+  const directions  = dirs.filter(d => !d.isTop && !['Comité de Pilotage', 'Secrétariat Technique'].includes(d.name));
+
+  const openModal = (dir) => setSelected(dir);
+  const closeModal = () => setSelected(null);
 
   return (
     <main id="main" className="page-enter">
       <PageBanner
         go={go}
-        
         title="Organisation de la CTD"
-        lead="Structure institutionnelle de la Commission autour du Président, du Comité de pilotage, du Secrétariat technique et des cinq directions spécialisées."
-        
+        lead="Structure institutionnelle de la Commission autour du Président, du Comité de pilotage, du Secrétariat technique et des cinq directions spécialisées. Cliquez sur une direction pour en savoir plus."
       />
       <section className="container" style={{paddingTop: 48, paddingBottom: 80}}>
-        {/* Organigramme stylisé */}
+        {/* Organigramme stylisé — cliquable */}
         <div className="orgchart">
           <div className="org-tier org-tier-1">
             {topLevel.map((d, i) => (
-              <div key={i} className="org-node org-node-top">
+              <div key={i} className="org-node org-node-top"
+                role="button" tabIndex={0}
+                onClick={() => openModal(d)}
+                onKeyDown={e => e.key === 'Enter' && openModal(d)}
+                aria-label={`Voir les détails : ${d.name}`}
+              >
                 <div className="org-role">{d.role}</div>
                 <div className="org-name">{d.name}</div>
+                <div className="org-node-click-hint">Cliquer pour détails</div>
               </div>
             ))}
           </div>
           <div className="org-connect"></div>
           <div className="org-tier org-tier-2">
             {secondLevel.map((d, i) => (
-              <div key={i} className="org-node">
+              <div key={i} className="org-node"
+                role="button" tabIndex={0}
+                onClick={() => openModal(d)}
+                onKeyDown={e => e.key === 'Enter' && openModal(d)}
+                aria-label={`Voir les détails : ${d.name}`}
+              >
                 <div className="org-role">{d.role}</div>
                 <div className="org-name">{d.name}</div>
+                <div className="org-node-click-hint">Cliquer pour détails</div>
               </div>
             ))}
           </div>
           <div className="org-connect"></div>
           <div className="org-tier org-tier-3">
             {directions.map((d, i) => (
-              <div key={i} className="org-node org-node-leaf">
+              <div key={i} className="org-node org-node-leaf"
+                role="button" tabIndex={0}
+                onClick={() => openModal(d)}
+                onKeyDown={e => e.key === 'Enter' && openModal(d)}
+                aria-label={`Voir les détails : ${d.name}`}
+              >
                 <div className="org-role">{d.role}</div>
                 <div className="org-name">{d.name}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Fiches des directions */}
-        <div style={{marginTop:64}}>
-          <div className="eyebrow" style={{marginBottom:24}}>Présentation des directions</div>
-          <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:20}} className="dir-grid">
-            {DIRECTIONS.map((d, i) => (
-              <div key={i} style={{
-                background:'var(--paper)', border:'1px solid var(--rule)',
-                borderRadius:'var(--radius-lg)', padding:'24px 28px',
-                borderLeft: d.isTop ? '4px solid var(--gold)' : '4px solid var(--navy)',
-              }}>
-                <div style={{
-                  fontSize:'var(--fs-xs)', letterSpacing:'0.16em', textTransform:'uppercase',
-                  color: d.isTop ? 'var(--gold)' : 'var(--navy)', fontWeight:700, marginBottom:8
-                }}>{d.role}</div>
-                <h4 style={{fontSize:'var(--fs-base)', color:'var(--ink)', margin:'0 0 10px'}}>{d.name}</h4>
-                <p style={{fontSize:'var(--fs-sm)', color:'var(--ink-soft)', margin:0, lineHeight:1.6}}>{d.desc}</p>
+                <div className="org-node-click-hint">Cliquer pour détails</div>
               </div>
             ))}
           </div>
         </div>
       </section>
+
+      {/* Modal popup — Option B */}
+      {selected && (
+        <div className="org-modal-overlay" onClick={closeModal} role="dialog" aria-modal="true" aria-labelledby="modal-name">
+          <div className="org-modal" onClick={e => e.stopPropagation()}>
+            <button className="org-modal-close" onClick={closeModal} aria-label="Fermer">✕</button>
+            <div className="org-modal-role" style={{color: selected.isTop ? 'var(--gold)' : 'var(--navy)'}}>
+              {selected.role}
+            </div>
+            <h2 className="org-modal-name" id="modal-name">{selected.name}</h2>
+            <p className="org-modal-desc">{selected.desc}</p>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

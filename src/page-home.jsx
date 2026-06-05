@@ -197,6 +197,44 @@ function ServicesSection({ go }) {
   );
 }
 
+/* ─── Cercle de progression SVG ─────────────────────────────── */
+function CircleProgress({ value = 0, size = 80, stroke = 7 }) {
+  const radius = (size - stroke) / 2;
+  const circ = 2 * Math.PI * radius;
+  const offset = circ - (value / 100) * circ;
+  const color = value === 100 ? '#1F5C1F' : value >= 60 ? '#B5860D' : value >= 30 ? '#0E2A5E' : '#6B7280';
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label={`${value}% d'avancement`}>
+      {/* Piste */}
+      <circle
+        cx={size / 2} cy={size / 2} r={radius}
+        fill="none" stroke="var(--cream-warm)" strokeWidth={stroke}
+      />
+      {/* Arc rempli */}
+      <circle
+        cx={size / 2} cy={size / 2} r={radius}
+        fill="none"
+        stroke={color}
+        strokeWidth={stroke}
+        strokeDasharray={circ}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        style={{ transition: 'stroke-dashoffset 0.9s cubic-bezier(.4,0,.2,1)' }}
+      />
+      {/* Pourcentage centré */}
+      <text
+        x="50%" y="50%"
+        dominantBaseline="central" textAnchor="middle"
+        fontSize={size * 0.18} fontWeight="800"
+        fontFamily="var(--sans)" fill={color}
+      >
+        {value}%
+      </text>
+    </svg>
+  );
+}
+
 /* ─── Portefeuille de désengagement ─────────────────────────── */
 function PortefeuilleSection({ go }) {
   const ongoingProjects = PROJECTS.filter(p => p.status === 'ongoing').slice(0, 3);
@@ -205,7 +243,6 @@ function PortefeuilleSection({ go }) {
       <div className="container">
         <div className="section-head">
           <div>
-
             <h2>Portefeuille de désengagement en cours.</h2>
           </div>
           <div className="right">
@@ -223,9 +260,13 @@ function PortefeuilleSection({ go }) {
               </div>
               <h3>{p.title}</h3>
               <p className="justify">{p.desc}</p>
-              <div className="project-progress">
-                <div className="bar"><div className="fill" style={{width: `${p.progress}%`}}></div></div>
-                <div className="progress-label">{p.progress}% avancement</div>
+              {/* Progression en cercle */}
+              <div className="project-progress-circle">
+                <CircleProgress value={p.progress} size={84} stroke={7} />
+                <div className="progress-circle-label">
+                  <span>Avancement</span>
+                  <strong>{p.progress === 100 ? 'Finalisé' : p.progress >= 60 ? 'Avancé' : p.progress >= 30 ? 'En cours' : 'Démarré'}</strong>
+                </div>
               </div>
               <div className="project-meta">
                 <div>

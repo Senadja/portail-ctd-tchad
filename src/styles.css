@@ -1997,6 +1997,95 @@ h1, h2, h3, h4 {
   background: var(--rule);
 }
 
+/* ===== Org chart node interactive ===== */
+.org-node { cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; }
+.org-node:hover, .org-node:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(14,42,94,0.12);
+  border-color: var(--navy);
+  outline: none;
+}
+.org-node-top:hover, .org-node-top:focus-visible {
+  box-shadow: 0 6px 20px rgba(14,42,94,0.3);
+  border-color: var(--gold);
+}
+.org-node-click-hint {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.org-node:hover .org-node-click-hint { opacity: 1; }
+.org-node-top:hover .org-node-click-hint { color: rgba(255,255,255,0.55); }
+
+/* ===== Modal Organigramme ===== */
+.org-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 20, 45, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.org-modal {
+  background: var(--paper);
+  border-radius: var(--radius-xl, 20px);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+  max-width: 520px;
+  width: 100%;
+  padding: 40px 44px;
+  position: relative;
+  animation: scaleIn 0.22s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+.org-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--ink-mute);
+  transition: background 0.15s, color 0.15s;
+}
+.org-modal-close:hover { background: var(--cream-warm); color: var(--ink); }
+.org-modal-role {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.org-modal-name {
+  font-family: var(--serif);
+  font-size: var(--fs-xl);
+  color: var(--navy);
+  font-weight: 700;
+  margin: 0 0 20px;
+  line-height: 1.25;
+}
+.org-modal-desc {
+  font-size: var(--fs-sm);
+  color: var(--ink-soft);
+  line-height: 1.7;
+  margin: 0;
+}
+
 /* ===== Organismes — cartes ===== */
 .org-cards-grid {
   display: grid;
@@ -2091,26 +2180,31 @@ h1, h2, h3, h4 {
   margin: 0 0 22px;
   line-height: 1.55;
 }
-.project-progress { margin-bottom: 20px; }
-.project-progress .bar {
-  height: 6px;
+.project-progress-circle {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 14px 18px;
   background: var(--cream-warm);
-  border-radius: 100px;
-  overflow: hidden;
+  border-radius: var(--radius);
 }
-.project-progress .fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--gold), var(--red));
-  border-radius: 100px;
-  transition: width 0.6s ease;
+.progress-circle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-.project-progress .progress-label {
+.progress-circle-label span {
   font-size: 11px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 700;
   color: var(--ink-mute);
-  margin-top: 8px;
+}
+.progress-circle-label strong {
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  font-weight: 700;
 }
 .project-meta {
   display: grid;
