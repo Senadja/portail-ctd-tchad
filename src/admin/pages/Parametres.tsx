@@ -424,7 +424,7 @@ const AdminParametres = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl pb-12 flex-1 flex flex-col">
+    <div className="space-y-6 pb-12 flex-1 flex flex-col">
       {/* Page header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -451,18 +451,18 @@ const AdminParametres = () => {
       <div className="flex gap-4 items-start">
 
         {/* Vertical sidebar nav */}
-        <div className="shrink-0 w-44 flex flex-col gap-0.5 bg-white rounded-2xl border border-gray-200 shadow-sm p-2">
+        <div className="shrink-0 w-52 flex flex-col gap-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-2.5">
           {TABS.map(t => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-left transition-all ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-left transition-all ${
                 tab === t.id
                   ? "bg-[#0D1F35] text-white shadow-sm"
                   : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
               }`}
             >
-              <t.icon className="w-3.5 h-3.5 shrink-0" />
+              <t.icon className="w-4 h-4 shrink-0" />
               <span className="truncate">{t.label}</span>
             </button>
           ))}
