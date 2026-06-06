@@ -340,6 +340,14 @@ const AdminParametres = () => {
           return parsed.length > 0 ? parsed : FLASH_INFOS;
         } catch { return FLASH_INFOS; }
       })(),
+      directions: (() => {
+        try {
+          const dirs = settings.directions;
+          if (!dirs) return DEFAULT_DIRECTIONS;
+          const parsed = typeof dirs === "string" ? JSON.parse(dirs) : dirs;
+          return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_DIRECTIONS;
+        } catch { return DEFAULT_DIRECTIONS; }
+      })(),
     });
     setDirty(false);
   }, [settings]);
