@@ -211,91 +211,73 @@ export function MissionsPage({ go }) {
 export function StructurePage({ go }) {
   const [selected, setSelected] = React.useState(null);
 
-  // Charger les directions depuis l'API settings (fallback sur les données statiques)
-  const { data: settings } = useApi(() => getSettings(), []);
-  const dirs = React.useMemo(() => {
-    try {
-      const raw = settings?.directions;
-      if (!raw) return DIRECTIONS;
-      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : DIRECTIONS;
-    } catch { return DIRECTIONS; }
-  }, [settings]);
-
-  const topLevel    = dirs.filter(d => d.isTop);
-  const secondLevel = dirs.filter(d => !d.isTop && ['Comité de Pilotage', 'Secrétariat Technique'].includes(d.name));
-  const directions  = dirs.filter(d => !d.isTop && !['Comité de Pilotage', 'Secrétariat Technique'].includes(d.name));
+  // Charger les organismes depuis la nouvelle API
+  const { data: treeData, isLoading } = useApi(() => 
+    fetch('/api/organismes/tree').then(res => res.json())
+  , []);
 
   const openModal = (dir) => setSelected(dir);
   const closeModal = () => setSelected(null);
+
+  // Fonction récursive pour afficher l'arbre
+  const renderTree = (nodes) => {
+    if (!nodes || nodes.length === 0) return null;
+    return (
+      <div className="org-tree-level">
+        {nodes.map(node => (
+          <div key={node.id} className="org-tree-branch">
+            <div className="org-node"
+                 role="button" tabIndex={0}
+                 onClick={() => openModal(node)}
+                 onKeyDown={e => e.key === 'Enter' && openModal(node)}>
+              <div className="org-name">{node.name}</div>
+              <div className="org-node-click-hint">Cliquer pour détails</div>
+            </div>
+            {node.children && node.children.length > 0 && (
+              <div className="org-tree-children">
+                {renderTree(node.children)}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <main id="main" className="page-enter">
       <PageBanner
         go={go}
         title="Organisation de la CTD"
-        lead="Structure institutionnelle de la Commission autour du Président, du Comité de pilotage, du Secrétariat technique et des cinq directions spécialisées. Cliquez sur une direction pour en savoir plus."
+        lead="Structure institutionnelle de la Commission. Cliquez sur une direction pour en savoir plus."
       />
       <section className="container" style={{paddingTop: 48, paddingBottom: 80}}>
-        {/* Organigramme stylisé — cliquable */}
-        <div className="orgchart">
-          <div className="org-tier org-tier-1">
-            {topLevel.map((d, i) => (
-              <div key={i} className="org-node org-node-top"
-                role="button" tabIndex={0}
-                onClick={() => openModal(d)}
-                onKeyDown={e => e.key === 'Enter' && openModal(d)}
-                aria-label={`Voir les détails : ${d.name}`}
-              >
-                <div className="org-role">{d.role}</div>
-                <div className="org-name">{d.name}</div>
-                <div className="org-node-click-hint">Cliquer pour détails</div>
+        {isLoading ? (
+          <div style={{textAlign: 'center', padding: '40px', color: 'var(--ink-mute)'}}>Chargement de l'organigramme...</div>
+        ) : (
+          <div className="orgchart-interactive">
+            {treeData && treeData.length > 0 ? (
+              <div className="orgchart-wrapper">
+                {renderTree(treeData)}
               </div>
-            ))}
+            ) : (
+              <div style={{textAlign: 'center', padding: '40px', color: 'var(--ink-mute)'}}>Aucun organisme défini pour le moment. L'arbre apparaîtra ici une fois configuré.</div>
+            )}
           </div>
-          <div className="org-connect"></div>
-          <div className="org-tier org-tier-2">
-            {secondLevel.map((d, i) => (
-              <div key={i} className="org-node"
-                role="button" tabIndex={0}
-                onClick={() => openModal(d)}
-                onKeyDown={e => e.key === 'Enter' && openModal(d)}
-                aria-label={`Voir les détails : ${d.name}`}
-              >
-                <div className="org-role">{d.role}</div>
-                <div className="org-name">{d.name}</div>
-                <div className="org-node-click-hint">Cliquer pour détails</div>
-              </div>
-            ))}
-          </div>
-          <div className="org-connect"></div>
-          <div className="org-tier org-tier-3">
-            {directions.map((d, i) => (
-              <div key={i} className="org-node org-node-leaf"
-                role="button" tabIndex={0}
-                onClick={() => openModal(d)}
-                onKeyDown={e => e.key === 'Enter' && openModal(d)}
-                aria-label={`Voir les détails : ${d.name}`}
-              >
-                <div className="org-role">{d.role}</div>
-                <div className="org-name">{d.name}</div>
-                <div className="org-node-click-hint">Cliquer pour détails</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
       </section>
 
-      {/* Modal popup — Option B */}
+      {/* Modal popup */}
       {selected && (
         <div className="org-modal-overlay" onClick={closeModal} role="dialog" aria-modal="true" aria-labelledby="modal-name">
           <div className="org-modal" onClick={e => e.stopPropagation()}>
             <button className="org-modal-close" onClick={closeModal} aria-label="Fermer">✕</button>
-            <div className="org-modal-role" style={{color: selected.isTop ? 'var(--gold)' : 'var(--navy)'}}>
-              {selected.role}
-            </div>
-            <h2 className="org-modal-name" id="modal-name">{selected.name}</h2>
-            <p className="org-modal-desc">{selected.desc}</p>
+            <h2 className="org-modal-name" id="modal-name" style={{ marginBottom: '16px' }}>{selected.name}</h2>
+            {selected.description ? (
+              <p className="org-modal-desc">{selected.description}</p>
+            ) : (
+              <p className="org-modal-desc" style={{fontStyle:'italic', opacity:0.5}}>Aucune description disponible pour cet organisme.</p>
+            )}
           </div>
         </div>
       )}

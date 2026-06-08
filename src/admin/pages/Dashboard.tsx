@@ -106,12 +106,12 @@ const AdminDashboard = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
-          <p className="text-gray-500 text-sm mt-1">Vue d'ensemble de l'activité du portail CTD</p>
+          <h1 className="text-3xl font-bold text-gray-900">Tableau de bord</h1>
+          <p className="text-gray-500 text-base mt-2">Vue d'ensemble de l'activité du portail CTD</p>
         </div>
         <Link to="/admin/actualites">
-          <Button className="gap-2 bg-[#0D1F35] hover:bg-[#0D1F35]/90 rounded-xl h-10 shadow-sm">
-            <Plus className="w-4 h-4" />
+          <Button className="gap-2 bg-[#0D1F35] hover:bg-[#0D1F35]/90 rounded-xl h-12 px-6 text-base shadow-sm">
+            <Plus className="w-5 h-5" />
             Nouvel article
           </Button>
         </Link>
@@ -128,23 +128,23 @@ const AdminDashboard = () => {
           >
             <Link
               to={stat.href}
-              className={`block bg-white rounded-2xl border p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ${
+              className={`block bg-white rounded-2xl border p-6 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ${
                 stat.alert ? "border-red-200" : "border-gray-200/80"
               }`}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${stat.bg}`}>
-                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
+              <div className="flex items-center justify-between mb-5">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.bg}`}>
+                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
                 </div>
                 {stat.alert && (
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-50 px-2 py-1 rounded-full">
-                    <AlertTriangle className="w-3 h-3" />
+                  <span className="flex items-center gap-1.5 text-xs font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-full">
+                    <AlertTriangle className="w-3.5 h-3.5" />
                     Urgent
                   </span>
                 )}
               </div>
-              <p className="text-3xl font-black text-gray-900">{stat.value}</p>
-              <p className="text-sm text-gray-500 mt-0.5">{stat.label}</p>
+              <p className="text-4xl font-black text-gray-900">{stat.value}</p>
+              <p className="text-base text-gray-500 mt-1">{stat.label}</p>
               {stat.total !== stat.value && (
                 <p className="text-xs text-gray-400 mt-1">{stat.total} au total</p>
               )}
@@ -157,29 +157,29 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1">
         {/* Recent activity */}
         <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm flex flex-col">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
-            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-gray-400" />
+          <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100 shrink-0">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-gray-400" />
               Activité récente
             </h2>
-            <span className="text-xs text-gray-400 font-medium">{recentActivity.length} éléments</span>
+            <span className="text-sm text-gray-400 font-medium">{recentActivity.length} éléments</span>
           </div>
           <div className="divide-y divide-gray-50 flex-1 overflow-y-auto">
             {recentActivity.length > 0 ? recentActivity.map((activity, i) => (
               <Link
                 key={i}
                 to={activity.href}
-                className="flex items-start gap-4 px-6 py-4 hover:bg-gray-50/60 transition-colors group"
+                className="flex items-start gap-5 px-8 py-5 hover:bg-gray-50/60 transition-colors group"
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                   activity.type === "success" ? "bg-emerald-50 text-emerald-500" :
                   activity.type === "warning" ? "bg-amber-50 text-amber-500" :
                   "bg-gray-100 text-gray-400"
                 }`}>
-                  <activity.icon className="w-4 h-4" />
+                  <activity.icon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate group-hover:text-[#0D1F35]">{activity.text}</p>
+                  <p className="text-base font-medium text-gray-800 truncate group-hover:text-[#0D1F35]">{activity.text}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${
                       activity.type === "success" ? "text-emerald-600 bg-emerald-50" :
@@ -205,10 +205,10 @@ const AdminDashboard = () => {
         {/* Quick actions */}
         <div className="space-y-4">
           <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900">Actions rapides</h2>
+            <div className="px-6 py-5 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900">Actions rapides</h2>
             </div>
-            <div className="p-3 space-y-1">
+            <div className="p-4 space-y-2">
               {[
                 { label: "Créer un article",       icon: Newspaper,    href: "/admin/actualites",   color: "text-blue-500 bg-blue-50" },
                 { label: "Ajouter un document",    icon: FileText,     href: "/admin/documents",    color: "text-emerald-500 bg-emerald-50" },
@@ -218,22 +218,22 @@ const AdminDashboard = () => {
                 <Link
                   key={item.label}
                   to={item.href}
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                  className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors group"
                 >
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${item.color}`}>
-                    <item.icon className="w-4 h-4" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${item.color}`}>
+                    <item.icon className="w-5 h-5" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-[#0D1F35]">{item.label}</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-gray-300 ml-auto group-hover:text-gray-500 transition-colors" />
+                  <span className="text-base font-medium text-gray-700 group-hover:text-[#0D1F35]">{item.label}</span>
+                  <ArrowRight className="w-4 h-4 text-gray-300 ml-auto group-hover:text-gray-500 transition-colors" />
                 </Link>
               ))}
             </div>
           </div>
 
           {/* Summary mini-cards */}
-          <div className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-sm space-y-4">
-            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-gray-400" />
+          <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm space-y-5">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-gray-400" />
               Résumé du contenu
             </h2>
             {[
@@ -242,12 +242,12 @@ const AdminDashboard = () => {
               { label: "AO attribués",           count: tenders.filter(t => t.status === "Attribué").length, icon: CheckCircle2, color: "text-emerald-400" },
               { label: "Formulaires traités",    count: forms.filter(f => f.status === "TRAITE").length,     icon: CheckCircle2, color: "text-emerald-400" },
             ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between text-sm">
+              <div key={item.label} className="flex items-center justify-between text-base">
                 <div className="flex items-center gap-2 text-gray-500">
-                  <item.icon className={`w-3.5 h-3.5 ${item.color}`} />
+                  <item.icon className={`w-4 h-4 ${item.color}`} />
                   {item.label}
                 </div>
-                <span className="font-bold text-gray-800 tabular-nums">{item.count}</span>
+                <span className="font-bold text-gray-800 tabular-nums text-lg">{item.count}</span>
               </div>
             ))}
           </div>

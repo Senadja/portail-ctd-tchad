@@ -204,3 +204,148 @@
   .org-tier { flex-direction: column; align-items: center; }
   .marquee-section { padding: 40px 0; }
 }
+
+/* ==========================================================================
+   ARBRE ORGANISATIONNEL RÉCURSIF (NOUVEAU)
+   ========================================================================== */
+
+.orgchart-interactive {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+  padding: 20px 0;
+}
+
+.orgchart-wrapper {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.org-tree-level {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+  position: relative;
+  padding-top: 24px;
+}
+
+/* Pseudo-éléments pour dessiner les lignes entre parents et enfants */
+.org-tree-level::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 24px;
+  border-left: 2px solid var(--rule);
+}
+
+.org-tree-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Lignes horizontales pour relier les enfants frères */
+.org-tree-branch::before,
+.org-tree-branch::after {
+  content: '';
+  position: absolute;
+  top: -24px;
+  width: 50%;
+  height: 24px;
+  border-top: 2px solid var(--rule);
+}
+
+.org-tree-branch::before {
+  right: 50%;
+}
+.org-tree-branch::after {
+  left: 50%;
+}
+
+/* On cache les lignes partielles sur le premier et dernier enfant d'une fratrie */
+.org-tree-branch:first-child::before,
+.org-tree-branch:last-child::after {
+  display: none;
+}
+
+/* Si un seul enfant, on n'affiche que la barre verticale depuis le parent (pas de barres horizontales) */
+.org-tree-branch:only-child::before,
+.org-tree-branch:only-child::after {
+  display: none;
+}
+.org-tree-branch:only-child {
+  padding-top: 0; /* la ligne vient directement du ::before de .org-tree-level */
+}
+
+/* Connecteur vertical depuis l'enfant vers sa propre ligne horizontale */
+.org-tree-branch > .org-node {
+  position: relative;
+  margin-bottom: 24px; /* Espace pour ses propres enfants */
+}
+
+.org-tree-branch > .org-node::before {
+  content: '';
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  width: 0;
+  height: 24px;
+  border-left: 2px solid var(--rule);
+}
+
+/* Pas de ligne montante pour le noeud racine tout en haut */
+.orgchart-wrapper > .org-tree-level > .org-tree-branch > .org-node::before {
+  display: none;
+}
+.orgchart-wrapper > .org-tree-level::before {
+  display: none;
+}
+.orgchart-wrapper > .org-tree-level {
+  padding-top: 0;
+}
+
+.org-tree-children {
+  display: flex;
+  justify-content: center;
+}
+
+/* Mobile: Vue Accordéon interactive (Fallback CSS simplifiée) */
+@media (max-width: 768px) {
+  .orgchart-interactive {
+    justify-content: flex-start;
+  }
+  .org-tree-level {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding-top: 0;
+    width: 100%;
+  }
+  .org-tree-level::before,
+  .org-tree-branch::before,
+  .org-tree-branch::after,
+  .org-tree-branch > .org-node::before {
+    display: none; /* Cache les lignes complexes sur mobile */
+  }
+  
+  .org-tree-branch {
+    align-items: flex-start;
+    padding-left: 20px;
+    border-left: 2px solid var(--rule-soft);
+    margin-bottom: 8px;
+    width: 100%;
+  }
+  .org-tree-branch > .org-node {
+    margin-bottom: 12px;
+    width: 100%;
+  }
+  .orgchart-wrapper > .org-tree-level > .org-tree-branch {
+    border-left: none;
+    padding-left: 0;
+  }
+}

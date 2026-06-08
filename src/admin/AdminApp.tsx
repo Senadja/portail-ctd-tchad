@@ -23,6 +23,7 @@ import Parametres     from "@admin/pages/Parametres";
 import Soumissions    from "@admin/pages/Soumissions";
 import PagesList      from "@admin/pages/PagesList";
 import PageEditor     from "@admin/pages/PageEditor";
+import Organigramme   from "@admin/pages/Organigramme";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,6 +58,7 @@ const AdminApp = () => (
                 <Route path="/admin/parametres"    element={<Parametres />} />
                 <Route path="/admin/pages"         element={<PagesList />} />
                 <Route path="/admin/pages/:id"     element={<PageEditor />} />
+                <Route path="/admin/organigramme"  element={<Organigramme />} />
               </Route>
             </Route>
 

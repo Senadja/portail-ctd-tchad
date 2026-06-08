@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@admin/contexts/AuthContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,8 +7,7 @@ import { z } from "zod";
 import { Button } from "@admin/components/ui/button";
 import { Input } from "@admin/components/ui/input";
 import { Label } from "@admin/components/ui/label";
-import { Lock, User, AlertCircle } from "lucide-react";
-import logoChad from "/logo-chad.png";
+import { Lock, User, AlertCircle, ArrowLeft, Eye, ArrowRight } from "lucide-react";
 
 const loginSchema = z.object({
   username: z.string().trim().min(3, "L'identifiant doit contenir au moins 3 caractères"),
@@ -45,27 +44,25 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0A2540] via-[#0D2F52] to-[#0A2540] p-4">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: "radial-gradient(circle at 25% 25%, white 1px, transparent 1px), radial-gradient(circle at 75% 75%, white 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-        }} />
-      </div>
-
-      <div className="relative w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-24 h-24 rounded-2xl bg-white flex items-center justify-center mx-auto mb-4 shadow-xl shadow-black/10 p-4">
-            <img src={logoChad} alt="Armoiries du Tchad" className="w-full h-full object-contain" />
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-1">Administration CTD</h1>
-          <p className="text-white/50 text-sm">Commission Technique du Désengagement</p>
-        </div>
-
+    <div className="min-h-screen flex items-center justify-center bg-[#153465] p-4">
+      <div className="relative w-full max-w-lg">
         {/* Form card */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div className="bg-white rounded-xl shadow-2xl p-10 sm:p-12 relative">
+          
+          <Link to="/" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors mb-8">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour au site
+          </Link>
+
+          {/* Logo */}
+          <div className="text-center mb-10">
+            <div className="w-24 h-24 mx-auto mb-6">
+              <img src="/logo-chad.png" alt="Armoiries du Tchad" className="w-full h-full object-contain" />
+            </div>
+            <h1 className="text-2xl font-bold text-[#0A2540] mb-2">Console d'administration</h1>
+            <p className="text-gray-500 text-sm">Connectez-vous pour accéder à l'espace de gestion.</p>
+          </div>
+
           {error && (
             <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-3 mb-6">
               <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
@@ -73,18 +70,18 @@ const AdminLogin = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-gray-700">
-                Identifiant
+              <Label htmlFor="username" className="text-sm font-semibold text-gray-700">
+                Email ou numéro de téléphone
               </Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   id="username"
                   type="text"
-                  placeholder="admin"
-                  className="pl-10"
+                  placeholder="Ex: admin@mci.td"
+                  className="pl-12 h-12 bg-[#F9F8F6] border-gray-200 focus:bg-white transition-colors text-base"
                   {...register("username")}
                 />
               </div>
@@ -92,18 +89,21 @@ const AdminLogin = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-700">
+              <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
                 Mot de passe
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
-                  className="pl-10"
+                  placeholder="Votre mot de passe"
+                  className="pl-12 pr-12 h-12 bg-[#F9F8F6] border-gray-200 focus:bg-white transition-colors text-base"
                   {...register("password")}
                 />
+                <button type="button" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <Eye className="w-5 h-5" />
+                </button>
               </div>
               {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
             </div>
@@ -111,24 +111,16 @@ const AdminLogin = () => {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#0A2540] hover:bg-[#0D2F52] text-white h-11"
+              className="w-full bg-[#153465] hover:bg-[#0D2245] text-white h-12 text-base font-medium flex items-center justify-center mt-8"
             >
-              {isLoading ? "Connexion en cours…" : "Se connecter"}
+              {isLoading ? "Connexion en cours…" : (
+                <>
+                  Se connecter
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </>
+              )}
             </Button>
           </form>
-
-          <div className="mt-6 pt-5 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-400">
-              Commission Technique du Désengagement — République du Tchad
-            </p>
-          </div>
-        </div>
-
-        {/* Demo credentials hint */}
-        <div className="mt-4 text-center">
-          <p className="text-xs text-white/30">
-            Identifiants par défaut : admin / admin123
-          </p>
         </div>
       </div>
     </div>

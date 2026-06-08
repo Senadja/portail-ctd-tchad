@@ -175,3 +175,15 @@ model PageContent {
   sections  Json     @default("{} ")
   updatedAt DateTime @updatedAt
 }
+
+model Organisme {
+  id          String      @id @default(cuid())
+  name        String
+  description String?     @db.Text
+  parentId    String?
+  parent      Organisme?  @relation("OrganismeHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Organisme[] @relation("OrganismeHierarchy")
+  order       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
