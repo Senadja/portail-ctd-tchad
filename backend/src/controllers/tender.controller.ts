@@ -20,7 +20,7 @@ export const getTenders = async (req: Request, res: Response) => {
 
 export const createTender = async (req: Request, res: Response) => {
   try {
-    const { reference, title, description, status, deadline, fileUrl } = req.body;
+    const { reference, title, description, status, deadline, fileUrl, documents, customStatuses } = req.body;
 
     if (!reference || !title || !deadline) {
       return res.status(400).json({ message: 'Référence, titre et date limite requis' });
@@ -34,6 +34,8 @@ export const createTender = async (req: Request, res: Response) => {
         status: status || 'En cours',
         deadline: new Date(deadline),
         fileUrl,
+        documents,
+        customStatuses,
       },
     });
 
@@ -47,7 +49,7 @@ export const createTender = async (req: Request, res: Response) => {
 export const updateTender = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { reference, title, description, status, deadline, fileUrl } = req.body;
+    const { reference, title, description, status, deadline, fileUrl, documents, customStatuses } = req.body;
 
     const tender = await prisma.tender.update({
       where: { id },
@@ -58,6 +60,8 @@ export const updateTender = async (req: Request, res: Response) => {
         status,
         deadline: deadline ? new Date(deadline) : undefined,
         fileUrl,
+        documents,
+        customStatuses,
       },
     });
 

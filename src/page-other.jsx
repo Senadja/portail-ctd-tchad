@@ -2,11 +2,21 @@
 
 import React, { useState } from 'react';
 import { SERVICES } from './data';
-import { submitForm } from './api';
+import { getSettings, submitForm, useApi } from './api';
 import { Icon } from './icons';
 
 /* ─── Services en ligne ────────────────────────────────────── */
 export function ServicesPage({ go }) {
+  const { data: settingsData } = useApi(() => getSettings(), []);
+  
+  let services = SERVICES;
+  if (settingsData?.services) {
+    try {
+      const parsed = typeof settingsData.services === 'string' ? JSON.parse(settingsData.services) : settingsData.services;
+      if (Array.isArray(parsed) && parsed.length > 0) services = parsed;
+    } catch { }
+  }
+
   return (
     <main id="main" className="page-enter">
       <section className="page-banner" style={{paddingBottom: 40}}>
@@ -20,7 +30,7 @@ export function ServicesPage({ go }) {
 
       <section className="container" style={{paddingTop: 48, paddingBottom: 80}}>
         <div className="svc-grid">
-          {SERVICES.map(s => (
+          {services.map(s => (
             <article key={s.n} className="svc-card"
               onClick={() => {
                 if (s.n === '01' || s.n === '02') go('appels-offres');

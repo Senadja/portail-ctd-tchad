@@ -62,18 +62,9 @@ interface FullSettings {
   facebookUrl: string;
   // Flash Infos
   flashInfos: FlashInfo[];
-  // Organigramme
-  directions: Direction[];
 }
 
-interface Direction {
-  name: string;
-  role: string;
-  desc: string;
-  isTop?: boolean;
-}
-
-import { FLASH_INFOS, DIRECTIONS as DEFAULT_DIRECTIONS } from "../../data";
+import { FLASH_INFOS } from "../../data";
 
 const EMPTY: FullSettings = {
   siteName: "Commission Technique du Désengagement",
@@ -97,7 +88,6 @@ const EMPTY: FullSettings = {
   linkedinUrl: "",
   facebookUrl: "",
   flashInfos: FLASH_INFOS,
-  directions: DEFAULT_DIRECTIONS,
 };
 
 const SEVERITY_OPTIONS = [
@@ -169,7 +159,6 @@ const TABS = [
   { id: "contact",    label: "Contact",         icon: Phone },
   { id: "social",     label: "Réseaux",         icon: LinkIcon },
   { id: "flashinfos",  label: "Flash Infos",    icon: Zap },
-  { id: "organigramme",label: "Organigramme",   icon: Users },
 ] as const;
 type TabId = typeof TABS[number]["id"];
 
@@ -340,13 +329,6 @@ const AdminParametres = () => {
           return parsed.length > 0 ? parsed : FLASH_INFOS;
         } catch { return FLASH_INFOS; }
       })(),
-      directions: (() => {
-        try {
-          const dirs = settings.directions;
-          if (!dirs) return DEFAULT_DIRECTIONS;
-          const parsed = typeof dirs === "string" ? JSON.parse(dirs) : dirs;
-          return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_DIRECTIONS;
-        } catch { return DEFAULT_DIRECTIONS; }
       })(),
     });
     setDirty(false);
@@ -408,7 +390,6 @@ const AdminParametres = () => {
         ...data,
         aboutPillars: JSON.stringify(data.aboutPillars),
         flashInfos:   JSON.stringify(data.flashInfos),
-        directions:   JSON.stringify(data.directions),
       };
       return api.put("/settings", payload);
     },
@@ -667,95 +648,6 @@ const AdminParametres = () => {
           {/* ── FLASH INFOS ──────────────────────────────────────────── */}
           {tab === "flashinfos" && (
             <FlashInfosPanel form={form} setForm={setForm} setDirty={setDirty} />
-          )}
-
-          {/* ── ORGANIGRAMME ─────────────────────────────────────────── */}
-          {tab === "organigramme" && (
-            <>
-              <div className="pb-4 border-b border-gray-100">
-                <h2 className="font-semibold text-gray-900 text-lg">Organigramme — Structure de la CTD</h2>
-                <p className="text-sm text-gray-500 mt-1">Modifiez le nom, le rôle et la description de chaque direction. Les changements s’affichent dans la popup de la page Organisation.</p>
-              </div>
-
-              <div className="space-y-3">
-                {form.directions.map((dir, idx) => (
-                  <div
-                    key={idx}
-                    className={`rounded-2xl border p-5 transition-all ${
-                      dir.isTop
-                        ? "border-amber-200 bg-amber-50/40"
-                        : "border-gray-200 bg-white hover:border-gray-300"
-                    }`}
-                  >
-                    {/* Card header */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black ${
-                        dir.isTop
-                          ? "bg-amber-400/20 text-amber-700"
-                          : "bg-[#0D1F35]/8 text-[#0D1F35]/60"
-                      }`}>
-                        {idx + 1}
-                      </div>
-                      <div className="flex-1">
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                          dir.isTop
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-gray-100 text-gray-500"
-                        }`}>
-                          <Building2 className="w-2.5 h-2.5" />
-                          {dir.isTop ? "Direction principale" : "Direction"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Fields */}
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Nom de la direction</label>
-                        <Input
-                          className="h-10 text-sm rounded-xl border-gray-200 focus:border-[#0D1F35] focus:ring-[#0D1F35]/10"
-                          value={dir.name}
-                          onChange={e => {
-                            const updated = [...form.directions];
-                            updated[idx] = { ...updated[idx], name: e.target.value };
-                            setForm(f => ({ ...f, directions: updated }));
-                            setDirty(true);
-                          }}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Rôle / Intitulé</label>
-                        <Input
-                          className="h-10 text-sm rounded-xl border-gray-200 focus:border-[#0D1F35] focus:ring-[#0D1F35]/10"
-                          value={dir.role}
-                          onChange={e => {
-                            const updated = [...form.directions];
-                            updated[idx] = { ...updated[idx], role: e.target.value };
-                            setForm(f => ({ ...f, directions: updated }));
-                            setDirty(true);
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Description affichée dans la popup</label>
-                      <Textarea
-                        rows={2}
-                        className="text-sm resize-none rounded-xl border-gray-200 focus:border-[#0D1F35] focus:ring-[#0D1F35]/10"
-                        value={dir.desc}
-                        onChange={e => {
-                          const updated = [...form.directions];
-                          updated[idx] = { ...updated[idx], desc: e.target.value };
-                          setForm(f => ({ ...f, directions: updated }));
-                          setDirty(true);
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
           )}
 
         </div>

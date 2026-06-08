@@ -26,6 +26,7 @@ interface Tender {
   deadline: string;
   fileUrl?: string;
   customStatuses?: string; // Stored as JSON string
+  documents?: string; // Stored as JSON string
   createdAt: string;
 }
 
@@ -48,6 +49,7 @@ type FormState = {
   status: string; 
   deadline: string; 
   fileUrl: string;
+  documents: { name: string; url: string }[];
   stages: Stage[];
 };
 
@@ -60,7 +62,7 @@ const AdminAppelsOffres = () => {
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [editing, setEditing] = useState<Tender | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tender | null>(null);
-  const [form, setForm] = useState<FormState>({ reference: "", title: "", description: "", status: "En cours", deadline: "", fileUrl: "" });
+  const [form, setForm] = useState<FormState>({ reference: "", title: "", description: "", status: "En cours", deadline: "", fileUrl: "", documents: [], stages: [] });
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -127,6 +129,7 @@ const AdminAppelsOffres = () => {
       status: customStatuses[0]?.label || "En cours", 
       deadline: "", 
       fileUrl: "",
+      documents: [],
       stages: []
     });
     setDrawerOpen(true);
@@ -150,6 +153,10 @@ const AdminAppelsOffres = () => {
       status: t.status, 
       deadline: new Date(t.deadline).toISOString().split("T")[0], 
       fileUrl: t.fileUrl || "",
+      documents: (() => {
+        try { return t.documents ? JSON.parse(t.documents) : []; }
+        catch { return []; }
+      })(),
       stages: savedStages
     });
     setDrawerOpen(true);
@@ -164,7 +171,8 @@ const AdminAppelsOffres = () => {
     // On prépare les données en incluant les stages sous forme de chaîne JSON
     const payload = {
       ...form,
-      customStatuses: JSON.stringify(form.stages)
+      customStatuses: JSON.stringify(form.stages),
+      documents: JSON.stringify(form.documents),
     };
 
     if (editing) updateMutation.mutate({ id: editing.id, data: payload as any });
@@ -183,8 +191,11 @@ const AdminAppelsOffres = () => {
     setUploadingFile(true);
     try {
       const res = await api.post("/documents/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
-      setForm(prev => ({ ...prev, fileUrl: res.data.url }));
-      toast({ title: "Fichier téléchargé" });
+      setForm(prev => ({ 
+        ...prev, 
+        documents: [...prev.documents, { name: file.name, url: res.data.url }] 
+      }));
+      toast({ title: "Document ajouté" });
     } catch {
       toast({ title: "Erreur d'upload", variant: "destructive" });
     } finally {
@@ -361,6 +372,50 @@ const AdminAppelsOffres = () => {
                   </div>
                   <Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={5} placeholder="Description détaillée de l'appel d'offres…" className="resize-none" />
                 </div>
+
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-bold text-[#0D1F35]">Documents rattachés</Label>
+                    <div>
+                      <input type="file" ref={fileRef} onChange={handleFileUpload} className="hidden" />
+                      <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploadingFile} className="h-8 rounded-lg gap-1.5">
+                        {uploadingFile ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} 
+                        Ajouter
+                      </Button>
+                    </div>
+                  </div>
+                  {form.documents.length === 0 ? (
+                    <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                      <p className="text-xs text-gray-400">Aucun document rattaché (DAO, Annexes...)</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {form.documents.map((doc, idx) => (
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200 shadow-sm group">
+                          <FileText className="w-4 h-4 text-blue-500 shrink-0" />
+                          <Input 
+                            value={doc.name} 
+                            onChange={e => {
+                              const newDocs = [...form.documents];
+                              newDocs[idx].name = e.target.value;
+                              setForm({ ...form, documents: newDocs });
+                            }}
+                            className="h-8 bg-gray-50 border-gray-100 text-sm"
+                            placeholder="Nom du document"
+                          />
+                          <button 
+                            type="button"
+                            onClick={() => setForm({ ...form, documents: form.documents.filter((_, i) => i !== idx) })}
+                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-4 pt-4 border-t">
                   <div className="flex items-center justify-between">
                     <Label className="text-base font-bold text-[#0D1F35]">Phases de l'Appel d'Offres</Label>

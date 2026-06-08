@@ -4,21 +4,41 @@ import React from 'react';
  * Composant de progression circulaire intelligent pour les Appels d'Offres
  * Calcule l'état visuel en fonction des dates de début et de fin.
  */
-export const TenderRadialProgress = ({ stages = [], size = 80, strokeWidth = 6 }) => {
+export const TenderRadialProgress = ({ stages = [], fallbackProgress = 0, fallbackColor = '#10b981', size = 80, strokeWidth = 6 }) => {
   const center = size / 2;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const now = new Date();
 
-  // Si pas d'étapes, on affiche un cercle vide par défaut
+  // Si pas d'étapes, on utilise les valeurs de fallback du statut
   if (!stages || stages.length === 0) {
+    const offset = circumference - (fallbackProgress / 100) * circumference;
     return (
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle
-          cx={center} cy={center} r={radius}
-          fill="none" stroke="#e5e7eb" strokeWidth={strokeWidth}
-        />
-      </svg>
+      <div className="radial-progress-container" style={{ position: 'relative', width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
+          <circle
+            cx={center} cy={center} r={radius}
+            fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={strokeWidth}
+          />
+          <circle
+            cx={center} cy={center} r={radius}
+            fill="none"
+            stroke={fallbackColor}
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            strokeLinecap="round"
+            style={{ transition: 'stroke-dashoffset 0.5s ease, stroke 0.5s ease' }}
+          />
+        </svg>
+        <div style={{
+          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: size * 0.22, fontWeight: 'bold', color: 'white'
+        }}>
+          {Math.round(fallbackProgress)}%
+        </div>
+      </div>
     );
   }
 

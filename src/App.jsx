@@ -8,6 +8,7 @@ import { TrackerPage } from './page-tracker';
 import { NewsListPage, ArticlePage } from './page-news';
 import { DocumentationPage } from './page-documentation';
 import { AppelsOffresPage } from './page-appels-offres';
+import { TenderDetailPage } from './page-tender-detail';
 import { ServicesPage, ContactPage, InvestisseursPage } from './page-other';
 import {
   PresentationPage,
@@ -19,15 +20,36 @@ import {
 import { FlashInfoBand, ChatBubble } from './flash-chat';
 
 function App() {
-  const [route, setRoute] = useState('home');
-  const [articleId, setArticleId] = useState(null);
-  const [tenderId, setTenderId] = useState(null);
+  const getInitialRoute = () => {
+    const path = window.location.pathname.substring(1);
+    return path || 'home';
+  };
+
+  const getInitialParam = (param) => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(param);
+  };
+
+  const [route, setRoute] = useState(getInitialRoute());
+  const [articleId, setArticleId] = useState(getInitialParam('id'));
+  const [tenderId, setTenderId] = useState(getInitialParam('id'));
   const [contrast, setContrast] = useState('normal');
   const [textSize, setTextSize] = useState('base');
   const [lang, setLang] = useState('FR');
 
   useEffect(() => { document.documentElement.setAttribute('data-contrast', contrast); }, [contrast]);
   useEffect(() => { document.documentElement.setAttribute('data-text', textSize); }, [textSize]);
+
+  // Synchronisation avec l'historique du navigateur (retour en arrière)
+  useEffect(() => {
+    const handlePopState = () => {
+      setRoute(getInitialRoute());
+      setArticleId(getInitialParam('id'));
+      setTenderId(getInitialParam('id'));
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Met à jour le titre de la page selon la route
   useEffect(() => {
@@ -39,6 +61,7 @@ function App() {
       'institution-mot': 'Mot du Président',
       'institution-historique': 'Historique',
       'appels-offres': "Appels d'offres",
+      'tender-detail': "Détail de l'appel d'offres",
       actualites: 'Actualités',
       article: 'Article',
       documentation: 'Documents officiels',
@@ -56,18 +79,21 @@ function App() {
   const go = (r) => {
     if (r === 'institution') r = 'institution-presentation';
     setRoute(r);
+    window.history.pushState({}, '', `/${r === 'home' ? '' : r}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const openArticle = (id) => {
     setArticleId(id);
     setRoute('article');
+    window.history.pushState({ id }, '', `/article?id=${id}`);
     window.scrollTo({ top: 0 });
   };
 
   const openTender = (id) => {
     setTenderId(id);
     setRoute('tender-detail');
+    window.history.pushState({ id }, '', `/tender-detail?id=${id}`);
     window.scrollTo({ top: 0 });
   };
 
@@ -89,6 +115,7 @@ function App() {
       {route === 'home'                   && <HomePage go={go} openArticle={openArticle} openTender={openTender} />}
       {route === 'tracker'                && <TrackerPage go={go} />}
       {route === 'appels-offres'          && <AppelsOffresPage go={go} openTender={openTender} />}
+      {route === 'tender-detail'          && <TenderDetailPage go={go} tenderId={tenderId} />}
       {route === 'actualites'             && <NewsListPage go={go} openArticle={openArticle} />}
       {route === 'article'                && <ArticlePage go={go} articleId={articleId} openArticle={openArticle} />}
       {route === 'documentation'          && <DocumentationPage go={go} />}

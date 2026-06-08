@@ -22,6 +22,7 @@ import MotDuPresident from "@admin/pages/MotDuPresident";
 import Parametres     from "@admin/pages/Parametres";
 import Soumissions    from "@admin/pages/Soumissions";
 import Organigramme   from "@admin/pages/Organigramme";
+import ContentBlocks  from "@admin/pages/ContentBlocks";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,6 +56,7 @@ const AdminApp = () => (
                 <Route path="/admin/soumissions"   element={<Soumissions />} />
                 <Route path="/admin/parametres"    element={<Parametres />} />
                 <Route path="/admin/organigramme"  element={<Organigramme />} />
+                <Route path="/admin/blocks"        element={<ContentBlocks />} />
               </Route>
             </Route>
 

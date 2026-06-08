@@ -6,7 +6,7 @@ import api from "@admin/lib/api";
 import {
   LayoutDashboard, UserCircle, Newspaper, FileText,
   Gavel, ClipboardList, Settings, LogOut, Menu, X,
-  ChevronRight, Bell, ExternalLink, Shield, ChevronDown, Image as ImageIcon, FileCheck, FolderTree
+  ChevronRight, Bell, ExternalLink, Shield, ChevronDown, Image as ImageIcon, FileCheck, FolderTree, Layout
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,6 +29,7 @@ const navGroups = [
     label: "Contenu éditorial",
     items: [
       { icon: FolderTree,   label: "Organigramme",      href: "/admin/organigramme" },
+      { icon: Layout,       label: "Blocs de contenu",  href: "/admin/blocks" },
       { icon: Newspaper,    label: "À la Une",          href: "/admin/actualites" },
       { icon: Gavel,        label: "Appels d'offres",   href: "/admin/appels-offres" },
       { icon: ImageIcon,    label: "Médiathèque",       href: "/admin/medias" },

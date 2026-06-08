@@ -177,11 +177,18 @@ export function MotPresidentPage({ go }) {
    ═══════════════════════════════════════════════════════════ */
 export function MissionsPage({ go }) {
   const { data: page } = useApi(() => getPageContent('institution-missions'), []);
+  const { data: settingsData } = useApi(() => getSettings(), []);
   const banner = page?.sections?.banner || {
     title: "Missions & Attributions",
     lead: "Neuf grandes missions structurent l'action de la Commission Technique du Désengagement au service de la modernisation économique du Tchad."
   };
-  const missions = page?.sections?.missions || MISSIONS_CTD;
+  let missions = page?.sections?.missions || MISSIONS_CTD;
+  if (settingsData?.missions) {
+    try {
+      const parsed = typeof settingsData.missions === 'string' ? JSON.parse(settingsData.missions) : settingsData.missions;
+      if (Array.isArray(parsed) && parsed.length > 0) missions = parsed;
+    } catch { }
+  }
 
   return (
     <main id="main" className="page-enter">

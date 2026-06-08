@@ -38,7 +38,8 @@ export const updateSettings = async (req: Request, res: Response) => {
       aboutSectionLabel, aboutTitle, aboutDescription, aboutCtaLabel,
       aboutImage1, aboutImage2, aboutPillars,
       presidentName, presidentTitle, presidentMessage, presidentImage,
-      tenderStatuses, flashInfos
+      tenderStatuses, flashInfos,
+      partners, projects, keyFigures, missions, services
     } = req.body;
 
     const data: any = {
@@ -67,6 +68,13 @@ export const updateSettings = async (req: Request, res: Response) => {
         ? flashInfos
         : JSON.stringify(flashInfos);
     }
+
+    const jsonFields = { partners, projects, keyFigures, missions, services };
+    Object.entries(jsonFields).forEach(([key, value]) => {
+      if (value !== undefined) {
+        data[key] = typeof value === 'string' ? value : JSON.stringify(value);
+      }
+    });
 
     // Remove undefined fields so Prisma doesn't overwrite with null
     Object.keys(data).forEach(k => data[k] === undefined && delete data[k]);

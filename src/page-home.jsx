@@ -74,7 +74,7 @@ function HeroSection({ go, openArticle, openTender, articles, tenders }) {
 }
 
 /* ─── Chiffres-clés ────────────────────────────────────────── */
-function KeyFiguresSection({ go }) {
+function KeyFiguresSection({ go, keyFigures }) {
   // On ignore les données de l'API pour cette section afin de garantir le style et le texte souhaités par l'utilisateur
   const aboutContent = {
     vision: <span style={{color: 'var(--gold)', textTransform: 'uppercase', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em', display: 'block', marginBottom: '8px'}}>Notre Vision</span>,
@@ -95,7 +95,7 @@ function KeyFiguresSection({ go }) {
             </button>
           </div>
           <div className="mission-right">
-            {KEY_FIGURES.map((f, i) => (
+            {keyFigures.map((f, i) => (
               <div key={i} className="mission-stat">
                 <div className="num">{f.num}<sup>{f.sup}</sup></div>
                 <div className="lbl">{f.label}</div>
@@ -108,9 +108,20 @@ function KeyFiguresSection({ go }) {
   );
 }
 
-/* ─── Appels d'offres en cours ──────────────────────────────── */
-function TendersSection({ go, tenders }) {
-  const displayTenders = tenders?.length ? tenders.slice(0, 3) : [];
+/* ─── Appels d'offres récents ────────────────────────────────── */
+function TendersSection({ go, openTender, tenders, settings }) {
+  const displayTenders = tenders.slice(0, 3);
+  let customStatuses = [
+    { label: "En cours", color: "#10b981", percentage: 25 },
+    { label: "Clôturé", color: "#6b7280", percentage: 50 },
+    { label: "Attribué", color: "#3b82f6", percentage: 100 },
+  ];
+  try {
+    if (settings?.tenderStatuses) {
+      const parsed = typeof settings.tenderStatuses === 'string' ? JSON.parse(settings.tenderStatuses) : settings.tenderStatuses;
+      if (Array.isArray(parsed) && parsed.length > 0) customStatuses = parsed;
+    }
+  } catch {}
 
   if (!displayTenders.length) return null;
 
@@ -130,18 +141,14 @@ function TendersSection({ go, tenders }) {
         </div>
         <div className="tenders-list">
           {displayTenders.map((t, i) => {
-            // Simulation d'étapes basées sur les dates (à remplacer par les vraies données de l'API)
-            const dummyStages = [
-              { id: 1, label: "Publication", start: "2024-05-01", end: "2024-05-10" },
-              { id: 2, label: "Réception", start: "2024-05-11", end: "2024-06-15" },
-              { id: 3, label: "Analyse", start: "2024-06-16", end: "2024-06-30" },
-              { id: 4, label: "Attribution", start: "2024-07-01", end: "2024-07-15" }
-            ];
+            const st = customStatuses.find(s => s.label === t.status) || customStatuses[0];
+            let stages = [];
+            try { stages = t.customStatuses ? JSON.parse(t.customStatuses) : []; } catch {}
 
             return (
-              <article key={t.id || i} className="tender-row" onClick={() => go('appels-offres')}>
+              <article key={t.id || i} className="tender-row" onClick={() => openTender && openTender(t.id)}>
                 <div className="tender-progress-circle">
-                   <TenderRadialProgress stages={dummyStages} size={60} strokeWidth={5} />
+                   <TenderRadialProgress stages={stages} fallbackProgress={st?.percentage || 0} fallbackColor={st?.color || '#10b981'} size={60} strokeWidth={5} />
                 </div>
                 <div className="tender-body">
                   <div className="tender-ref">{t.reference || `AO-2026-00${i+1}`}</div>
@@ -152,8 +159,8 @@ function TendersSection({ go, tenders }) {
                   <span className="tender-deadline">
                     Clôture : {t.deadline ? new Date(t.deadline).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'}) : 'À préciser'}
                   </span>
-                  <div style={{fontSize: 11, color: 'var(--gold)', marginTop: 4, fontWeight: 500}}>
-                    Phase actuelle : Réception des plis
+                  <div style={{fontSize: 11, color: st?.color || 'var(--gold)', marginTop: 4, fontWeight: 500}}>
+                    Statut : {st?.label || t.status}
                   </div>
                 </div>
                 <Icon.arrowRight style={{width:18, height:18, flexShrink:0, color:'var(--ink-mute)', marginLeft: 15}} />
@@ -167,8 +174,8 @@ function TendersSection({ go, tenders }) {
 }
 
 /* ─── Services en ligne ────────────────────────────────────── */
-function ServicesSection({ go }) {
-  const topServices = SERVICES.slice(0, 3);
+function ServicesSection({ go, services }) {
+  const topServices = services.slice(0, 3);
   return (
     <section className="section" aria-label="Services en ligne">
       <div className="container">
@@ -236,8 +243,8 @@ function CircleProgress({ value = 0, size = 80, stroke = 7 }) {
 }
 
 /* ─── Portefeuille de désengagement ─────────────────────────── */
-function PortefeuilleSection({ go }) {
-  const ongoingProjects = PROJECTS.filter(p => p.status === 'ongoing').slice(0, 3);
+function PortefeuilleSection({ go, projects }) {
+  const ongoingProjects = projects.filter(p => p.status === 'ongoing').slice(0, 3);
   return (
     <section className="section" aria-label="Portefeuille de désengagement">
       <div className="container">
@@ -290,17 +297,31 @@ function PortefeuilleSection({ go }) {
 export function HomePage({ go, openArticle, openTender }) {
   const { data: articlesData } = useApi(() => getArticles('?limit=6&published=true'), []);
   const { data: tendersData } = useApi(() => getTenders('?status=En cours&limit=3'), []);
+  const { data: settingsData } = useApi(() => getSettings(), []);
 
   const articles = articlesData?.articles || articlesData || [];
   const tenders = tendersData?.tenders || tendersData || [];
+  const settings = settingsData || {};
+
+  const parseJson = (str, fallback) => {
+    try {
+      const parsed = typeof str === 'string' ? JSON.parse(str) : str;
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : fallback;
+    } catch { return fallback; }
+  };
+
+  const keyFigures = parseJson(settings.keyFigures, KEY_FIGURES);
+  const projects = parseJson(settings.projects, PROJECTS);
+  const partners = parseJson(settings.partners, PARTNERS);
+  const services = parseJson(settings.services, SERVICES);
 
   return (
     <main id="main" className="page-enter">
       <HeroSection go={go} openArticle={openArticle} openTender={openTender} articles={articles} tenders={tenders} />
-      <KeyFiguresSection go={go} />
-      <TendersSection go={go} tenders={tenders} />
-      <ServicesSection go={go} />
-      <PortefeuilleSection go={go} />
+      <KeyFiguresSection go={go} keyFigures={keyFigures} />
+      <TendersSection go={go} openTender={openTender} tenders={tenders} settings={settings} />
+      <ServicesSection go={go} services={services} />
+      <PortefeuilleSection go={go} projects={projects} />
 
       {/* Partenaires & Investisseurs */}
       <section className="marquee-section" aria-label="Partenaires et organismes">
@@ -312,7 +333,7 @@ export function HomePage({ go, openArticle, openTender }) {
             </div>
           </div>
         </div>
-        <Marquee items={PARTNERS} speed={60} ariaLabel="Carrousel des partenaires de la CTD" />
+        <Marquee items={partners} speed={60} ariaLabel="Carrousel des partenaires de la CTD" />
       </section>
     </main>
   );

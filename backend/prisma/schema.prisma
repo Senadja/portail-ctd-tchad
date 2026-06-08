@@ -62,6 +62,9 @@ model Tender {
   // Statuts custom JSON: [{ key, label, color, order }]
   customStatuses     String?   @db.Text
 
+  // Documents multiples JSON: [{ name, url }]
+  documents          String?   @db.Text
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -153,6 +156,13 @@ model Settings {
   // Flash Infos pour la bande défilante
   // Format JSON: [{ severity: "info"|"warning"|"danger"|"success", label: "...", text: "..." }]
   flashInfos       String? @db.Text
+
+  // Blocs de contenus (stockés en JSON)
+  partners         String? @db.Text
+  projects         String? @db.Text
+  keyFigures       String? @db.Text
+  missions         String? @db.Text
+  services         String? @db.Text
 
   updatedAt     DateTime @updatedAt
 }
