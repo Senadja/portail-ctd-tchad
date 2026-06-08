@@ -21,8 +21,6 @@ import Medias         from "@admin/pages/Medias";
 import MotDuPresident from "@admin/pages/MotDuPresident";
 import Parametres     from "@admin/pages/Parametres";
 import Soumissions    from "@admin/pages/Soumissions";
-import PagesList      from "@admin/pages/PagesList";
-import PageEditor     from "@admin/pages/PageEditor";
 import Organigramme   from "@admin/pages/Organigramme";
 
 const queryClient = new QueryClient({
@@ -56,8 +54,6 @@ const AdminApp = () => (
                 <Route path="/admin/formulaires"   element={<Formulaires />} />
                 <Route path="/admin/soumissions"   element={<Soumissions />} />
                 <Route path="/admin/parametres"    element={<Parametres />} />
-                <Route path="/admin/pages"         element={<PagesList />} />
-                <Route path="/admin/pages/:id"     element={<PageEditor />} />
                 <Route path="/admin/organigramme"  element={<Organigramme />} />
               </Route>
             </Route>

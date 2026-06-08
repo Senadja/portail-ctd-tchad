@@ -28,7 +28,6 @@ const navGroups = [
   {
     label: "Contenu éditorial",
     items: [
-      { icon: FileText,     label: "Pages",             href: "/admin/pages" },
       { icon: FolderTree,   label: "Organigramme",      href: "/admin/organigramme" },
       { icon: Newspaper,    label: "À la Une",          href: "/admin/actualites" },
       { icon: Gavel,        label: "Appels d'offres",   href: "/admin/appels-offres" },

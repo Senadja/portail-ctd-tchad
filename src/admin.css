@@ -40,10 +40,17 @@
   box-sizing: border-box;
 }
 
-/* Force body to hide public pattern when in admin mode */
+/* Force html and body to reset global zoom and hide public pattern when in admin mode */
+html:has(#admin-root) {
+  zoom: 1 !important;
+  background-color: hsl(210 40% 98%) !important;
+  height: 100%;
+}
+
 body:has(#admin-root) {
   background-image: none !important;
   background-color: hsl(210 40% 98%) !important;
+  min-height: 100vh;
 }
 
 body:has(#admin-root)::before,
