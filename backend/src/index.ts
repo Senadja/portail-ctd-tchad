@@ -15,6 +15,7 @@ import trackerRoutes from './routes/tracker.routes';
 import mediaRoutes from './routes/media.routes';
 import pageContentRoutes from './routes/page-content.routes';
 import organismeRoutes from './routes/organisme.routes';
+import translateRoutes from './routes/translate.routes';
 
 dotenv.config();
 
@@ -66,6 +67,7 @@ app.use('/api/tracker', trackerRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/page-content', pageContentRoutes);
 app.use('/api/organismes', organismeRoutes);
+app.use('/api/translate', translateRoutes);
 
 // ─── Santé ──────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

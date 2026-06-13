@@ -7,14 +7,18 @@ import { Input } from "@admin/components/ui/input";
 import { Textarea } from "@admin/components/ui/textarea";
 import { Label } from "@admin/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@admin/components/ui/select";
-import { Plus, Search, Edit2, Trash2, X, Loader2, Gavel, Calendar, Settings as SettingsIcon, Upload, FileText, GripVertical } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, X, Loader2, Gavel, Calendar, Settings as SettingsIcon, Upload, FileText, GripVertical, Clock } from "lucide-react";
 import { useToast } from "@admin/hooks/use-toast";
+import { EmptyState } from "@admin/components/admin/EmptyState";
+import { ErrorState } from "@admin/components/admin/ErrorState";
+import { parseTenderConfig, serializeTenderConfig, getEffectiveStatus } from "../../lib/tenderStatus";
 
 interface Stage {
   id: string;
   label: string;
   start: string;
   end: string;
+  color?: string;
 }
 
 interface Tender {
@@ -51,6 +55,7 @@ type FormState = {
   fileUrl: string;
   documents: { name: string; url: string }[];
   stages: Stage[];
+  autoStatus: boolean;
 };
 
 const AdminAppelsOffres = () => {
@@ -62,7 +67,7 @@ const AdminAppelsOffres = () => {
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [editing, setEditing] = useState<Tender | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tender | null>(null);
-  const [form, setForm] = useState<FormState>({ reference: "", title: "", description: "", status: "En cours", deadline: "", fileUrl: "", documents: [], stages: [] });
+  const [form, setForm] = useState<FormState>({ reference: "", title: "", description: "", status: "En cours", deadline: "", fileUrl: "", documents: [], stages: [], autoStatus: false });
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -90,7 +95,7 @@ const AdminAppelsOffres = () => {
   // Drag-and-drop state for status reordering
   const dragIdx = useRef<number | null>(null);
 
-  const { data: tenders = [], isLoading } = useQuery<Tender[]>({
+  const { data: tenders = [], isLoading, isError, refetch } = useQuery<Tender[]>({
     queryKey: ["tenders"],
     queryFn: () => api.get("/tenders").then(r => r.data),
   });
@@ -104,11 +109,13 @@ const AdminAppelsOffres = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: FormState }) => api.put(`/tenders/${id}`, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["tenders"] }); toast({ title: "Mis à jour" }); setDrawerOpen(false); },
+    onError: (e: any) => toast({ title: "Erreur", description: e.response?.data?.message || "Impossible de mettre à jour l'appel d'offres.", variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/tenders/${id}`),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["tenders"] }); toast({ title: "Supprimé" }); setDeleteTarget(null); },
+    onError: (e: any) => toast({ title: "Erreur", description: e.response?.data?.message || "Impossible de supprimer l'appel d'offres.", variant: "destructive" }),
   });
 
   const updateSettingsMutation = useMutation({
@@ -117,7 +124,8 @@ const AdminAppelsOffres = () => {
       queryClient.invalidateQueries({ queryKey: ["settings"] });
       toast({ title: "Statuts mis à jour" });
       setStatusModalOpen(false);
-    }
+    },
+    onError: (e: any) => toast({ title: "Erreur", description: e.response?.data?.message || "Impossible d'enregistrer les statuts.", variant: "destructive" }),
   });
 
   const openCreate = () => {
@@ -130,34 +138,29 @@ const AdminAppelsOffres = () => {
       deadline: "", 
       fileUrl: "",
       documents: [],
-      stages: []
+      stages: [],
+      autoStatus: false
     });
     setDrawerOpen(true);
   };
 
   const openEdit = (t: Tender) => {
-    let savedStages: Stage[] = [];
-    if (t.customStatuses) {
-      try {
-        savedStages = JSON.parse(t.customStatuses);
-      } catch (e) {
-        console.error("Failed to parse stages", e);
-      }
-    }
+    const cfg = parseTenderConfig(t.customStatuses);
 
     setEditing(t);
-    setForm({ 
-      reference: t.reference, 
-      title: t.title, 
-      description: t.description, 
-      status: t.status, 
-      deadline: new Date(t.deadline).toISOString().split("T")[0], 
+    setForm({
+      reference: t.reference,
+      title: t.title,
+      description: t.description,
+      status: t.status,
+      deadline: new Date(t.deadline).toISOString().split("T")[0],
       fileUrl: t.fileUrl || "",
       documents: (() => {
         try { return t.documents ? JSON.parse(t.documents) : []; }
         catch { return []; }
       })(),
-      stages: savedStages
+      stages: cfg.phases as Stage[],
+      autoStatus: cfg.autoStatus
     });
     setDrawerOpen(true);
   };
@@ -171,7 +174,7 @@ const AdminAppelsOffres = () => {
     // On prépare les données en incluant les stages sous forme de chaîne JSON
     const payload = {
       ...form,
-      customStatuses: JSON.stringify(form.stages),
+      customStatuses: serializeTenderConfig(form.autoStatus, form.stages),
       documents: JSON.stringify(form.documents),
     };
 
@@ -260,13 +263,32 @@ const AdminAppelsOffres = () => {
       {/* Table */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-gray-300" /></div>
+      ) : isError ? (
+        <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm flex-1 flex flex-col">
+          <ErrorState onRetry={refetch} />
+        </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm flex-1 flex flex-col">
           {filtered.length === 0 ? (
-            <div className="py-16 text-center">
-              <Gavel className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-400 font-medium">Aucun appel d'offres trouvé</p>
-            </div>
+            search || filterStatus !== "all" ? (
+              <EmptyState
+                icon={<Gavel className="w-7 h-7" />}
+                title="Aucun résultat"
+                description="Aucun appel d'offres ne correspond à votre recherche ou à ce filtre."
+              />
+            ) : (
+              <EmptyState
+                icon={<Gavel className="w-7 h-7" />}
+                title="Aucun appel d'offres"
+                description="Commencez par créer votre premier appel d'offres."
+                action={
+                  <Button onClick={openCreate} className="gap-2 bg-[#0D1F35] hover:bg-[#0D1F35]/90 rounded-xl h-10 shadow-sm">
+                    <Plus className="w-4 h-4" />
+                    Nouvel AO
+                  </Button>
+                }
+              />
+            )
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -281,7 +303,7 @@ const AdminAppelsOffres = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filtered.map(t => {
-                    const st = customStatuses.find(s => s.label === t.status) || customStatuses[0];
+                    const eff = getEffectiveStatus(t, customStatuses);
                     return (
                       <tr key={t.id} className="hover:bg-gray-50/60 transition-colors">
                         <td className="py-3.5 px-5 font-mono text-xs font-bold text-[#0D1F35]/60">{t.reference}</td>
@@ -293,11 +315,13 @@ const AdminAppelsOffres = () => {
                           </span>
                         </td>
                         <td className="py-3.5 px-4">
-                          <span 
-                            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-white shadow-sm"
-                            style={{ backgroundColor: st?.color || "#6b7280" }}
+                          <span
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-white shadow-sm"
+                            style={{ backgroundColor: eff.color || "#6b7280" }}
+                            title={eff.autoStatus ? "Statut automatique selon le calendrier" : undefined}
                           >
-                            {t.status}
+                            {eff.autoStatus && <Clock className="w-3 h-3" />}
+                            {eff.label}
                           </span>
                         </td>
                         <td className="py-3.5 px-5 text-right">
@@ -417,13 +441,32 @@ const AdminAppelsOffres = () => {
                 </div>
 
                 <div className="space-y-4 pt-4 border-t">
+                  {/* Statut automatique selon le calendrier */}
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-[#0D1F35]/5 border border-[#0D1F35]/10 p-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-[#0D1F35]" /> Statut automatique selon le calendrier
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">Le statut et la couleur affichés suivront automatiquement la phase active du jour.</p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={form.autoStatus}
+                      onClick={() => setForm({ ...form, autoStatus: !form.autoStatus })}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${form.autoStatus ? "bg-[#0D1F35]" : "bg-gray-300"}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.autoStatus ? "translate-x-6" : "translate-x-1"}`} />
+                    </button>
+                  </div>
+
                   <div className="flex items-center justify-between">
                     <Label className="text-base font-bold text-[#0D1F35]">Phases de l'Appel d'Offres</Label>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setForm({ ...form, stages: [...form.stages, { id: Date.now().toString(), label: "Nouvelle phase", start: "", end: "" }] })}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setForm({ ...form, stages: [...form.stages, { id: Date.now().toString(), label: "Nouvelle phase", start: "", end: "", color: "#10b981" }] })}
                       className="h-8 rounded-lg gap-1.5"
                     >
                       <Plus className="w-3.5 h-3.5" /> Ajouter
@@ -446,17 +489,30 @@ const AdminAppelsOffres = () => {
                           </button>
                           
                           <div className="space-y-1.5">
-                            <Label className="text-xs">Libellé de la phase</Label>
-                            <Input 
-                              value={stage.label} 
-                              onChange={e => {
-                                const newStages = [...form.stages];
-                                newStages[idx].label = e.target.value;
-                                setForm({ ...form, stages: newStages });
-                              }}
-                              placeholder="ex: Réception des offres"
-                              className="h-9 bg-white"
-                            />
+                            <Label className="text-xs">Libellé & couleur de la phase</Label>
+                            <div className="flex gap-2">
+                              <Input
+                                value={stage.label}
+                                onChange={e => {
+                                  const newStages = [...form.stages];
+                                  newStages[idx].label = e.target.value;
+                                  setForm({ ...form, stages: newStages });
+                                }}
+                                placeholder="ex: Réception des offres"
+                                className="h-9 bg-white flex-1"
+                              />
+                              <input
+                                type="color"
+                                value={stage.color || "#10b981"}
+                                onChange={e => {
+                                  const newStages = [...form.stages];
+                                  newStages[idx].color = e.target.value;
+                                  setForm({ ...form, stages: newStages });
+                                }}
+                                title="Couleur de la phase"
+                                className="h-9 w-12 shrink-0 rounded-lg border border-gray-200 bg-white p-1 cursor-pointer"
+                              />
+                            </div>
                           </div>
                           
                           <div className="grid grid-cols-2 gap-3">

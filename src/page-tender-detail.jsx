@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { getSettings, getTenders, useApi } from './api';
 import { Icon } from './icons';
 import { TenderRadialProgress } from './tender-progress';
+import { getEffectiveStatus } from './lib/tenderStatus';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5015';
 
@@ -45,9 +46,8 @@ export function TenderDetailPage({ go, tenderId }) {
     );
   }
 
-  const st = customStatuses.find(s => s.label === tender.status) || customStatuses[0];
-  let stages = [];
-  try { stages = tender.customStatuses ? JSON.parse(tender.customStatuses) : []; } catch {}
+  const eff = getEffectiveStatus(tender, customStatuses);
+  const stages = eff.phases;
   
   let documents = [];
   try { documents = tender.documents ? JSON.parse(tender.documents) : []; } catch {}
@@ -74,8 +74,8 @@ export function TenderDetailPage({ go, tenderId }) {
             <span style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--navy-deep)', background: 'var(--gold)', padding: '4px 10px', borderRadius: 4 }}>
               {tender.reference}
             </span>
-            <span style={{ fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 4, background: st.color, color: 'white' }}>
-              {tender.status}
+            <span style={{ fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 4, background: eff.color, color: 'white' }}>
+              {eff.label}
             </span>
           </div>
           <h1>{tender.title}</h1>
@@ -119,7 +119,7 @@ export function TenderDetailPage({ go, tenderId }) {
                     
                     return (
                       <div key={i} className={`step ${isDone ? 'done' : ''}`} role="listitem" style={{ paddingBottom: 24 }}>
-                        <div className="dot" style={{ background: isDone ? 'var(--gold)' : isCurrent ? 'var(--navy)' : '#e5e7eb', color: 'white', fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 800 }}>
+                        <div className="dot" style={{ background: isDone ? (stage.color || 'var(--gold)') : isCurrent ? (stage.color || 'var(--navy)') : '#e5e7eb', color: 'white', fontFamily: 'var(--sans)', fontSize: 10, fontWeight: 800 }}>
                           {isDone ? '✓' : ''}
                         </div>
                         <div className="body">
@@ -141,9 +141,9 @@ export function TenderDetailPage({ go, tenderId }) {
             {/* Progression */}
             <div style={{ background: 'var(--navy)', borderRadius: 'var(--radius-lg)', padding: '32px', textAlign: 'center', color: 'white' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                <TenderRadialProgress stages={stages} fallbackProgress={st?.percentage || 0} fallbackColor={st?.color || '#10b981'} size={120} strokeWidth={8} />
+                <TenderRadialProgress stages={stages} fallbackProgress={eff.percentage || 0} fallbackColor={eff.color || '#10b981'} color={eff.autoStatus ? eff.color : null} size={120} strokeWidth={8} />
               </div>
-              <h3 style={{ margin: 0, color: 'white' }}>{st?.label}</h3>
+              <h3 style={{ margin: 0, color: 'white' }}>{eff.label}</h3>
               <p style={{ fontSize: 'var(--fs-sm)', color: 'rgba(255,255,255,0.7)', margin: '8px 0 0' }}>Statut actuel de l'opération</p>
             </div>
 

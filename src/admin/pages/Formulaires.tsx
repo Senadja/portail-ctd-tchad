@@ -5,6 +5,8 @@ import api from "@admin/lib/api";
 import { Input } from "@admin/components/ui/input";
 import { Button } from "@admin/components/ui/button";
 import { useToast } from "@admin/hooks/use-toast";
+import { ErrorState } from "@admin/components/admin/ErrorState";
+import { EmptyState } from "@admin/components/admin/EmptyState";
 import {
   Search, Eye, CheckCircle2, Clock, Archive, X, Loader2,
   ClipboardList, Mail, Phone, User, Building2, Calendar,
@@ -55,7 +57,7 @@ const AdminFormulaires = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selected, setSelected] = useState<FormSubmission | null>(null);
 
-  const { data: submissions = [], isLoading } = useQuery<FormSubmission[]>({
+  const { data: submissions = [], isLoading, isError, refetch } = useQuery<FormSubmission[]>({
     queryKey: ["forms"],
     queryFn: () => api.get("/forms").then(r => r.data),
   });
@@ -66,6 +68,9 @@ const AdminFormulaires = () => {
       queryClient.invalidateQueries({ queryKey: ["forms"] });
       toast({ title: "Statut mis à jour" });
       if (selected?.id === id) setSelected(prev => prev ? { ...prev, status } : null);
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Le changement de statut a échoué.", variant: "destructive" });
     },
   });
 
@@ -128,13 +133,24 @@ const AdminFormulaires = () => {
       {/* Table */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-gray-300" /></div>
+      ) : isError ? (
+        <ErrorState onRetry={refetch} />
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm flex-1 flex flex-col">
           {filtered.length === 0 ? (
-            <div className="py-16 text-center">
-              <ClipboardList className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-400 font-medium">Aucun formulaire trouvé</p>
-            </div>
+            search || filterStatus !== "all" ? (
+              <EmptyState
+                icon={<ClipboardList />}
+                title="Aucun résultat"
+                description="Aucun formulaire ne correspond à votre recherche ou à ce filtre."
+              />
+            ) : (
+              <EmptyState
+                icon={<ClipboardList />}
+                title="Aucun formulaire reçu"
+                description="Les soumissions des formulaires du site apparaîtront ici."
+              />
+            )
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

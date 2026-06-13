@@ -3,3 +3,6 @@ node_modules
 .env
 
 /src/generated/prisma
+
+# Cache de traduction généré au runtime (cf. translate.controller.ts)
+translations-cache.json

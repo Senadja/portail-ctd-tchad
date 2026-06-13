@@ -8,6 +8,7 @@ import {
   AlertTriangle, Plus, Loader2, BarChart3,
 } from "lucide-react";
 import { Button } from "@admin/components/ui/button";
+import { ErrorState } from "@admin/components/admin/ErrorState";
 
 // ── Types ────────────────────────────────────────────────
 interface Article  { id: string; title: string; published: boolean; category: string; createdAt: string }
@@ -16,12 +17,14 @@ interface Tender   { id: string; reference: string; title: string; status: strin
 interface Form     { id: string; type: string; status: string; data: any; createdAt: string }
 
 const AdminDashboard = () => {
-  const { data: articles  = [], isLoading: loadingA } = useQuery<Article[]>({ queryKey: ["articles"],  queryFn: () => api.get("/articles").then(r => r.data) });
-  const { data: documents = [], isLoading: loadingD } = useQuery<Document[]>({ queryKey: ["documents"], queryFn: () => api.get("/documents").then(r => r.data) });
-  const { data: tenders  = [], isLoading: loadingT } = useQuery<Tender[]>({ queryKey: ["tenders"],  queryFn: () => api.get("/tenders").then(r => r.data) });
-  const { data: forms    = [], isLoading: loadingF } = useQuery<Form[]>({ queryKey: ["forms"],    queryFn: () => api.get("/forms").then(r => r.data) });
+  const { data: articles  = [], isLoading: loadingA, isError: errA, refetch: refetchA } = useQuery<Article[]>({ queryKey: ["articles"],  queryFn: () => api.get("/articles").then(r => r.data) });
+  const { data: documents = [], isLoading: loadingD, isError: errD, refetch: refetchD } = useQuery<Document[]>({ queryKey: ["documents"], queryFn: () => api.get("/documents").then(r => r.data) });
+  const { data: tenders  = [], isLoading: loadingT, isError: errT, refetch: refetchT } = useQuery<Tender[]>({ queryKey: ["tenders"],  queryFn: () => api.get("/tenders").then(r => r.data) });
+  const { data: forms    = [], isLoading: loadingF, isError: errF, refetch: refetchF } = useQuery<Form[]>({ queryKey: ["forms"],    queryFn: () => api.get("/forms").then(r => r.data) });
 
   const isLoading = loadingA || loadingD || loadingT || loadingF;
+  const isError = errA || errD || errT || errF;
+  const refetchAll = () => { refetchA(); refetchD(); refetchT(); refetchF(); };
 
   const stats = [
     {
@@ -99,6 +102,10 @@ const AdminDashboard = () => {
         <Loader2 className="w-8 h-8 animate-spin text-[#0A2540]/40" />
       </div>
     );
+  }
+
+  if (isError) {
+    return <ErrorState onRetry={refetchAll} />;
   }
 
   return (

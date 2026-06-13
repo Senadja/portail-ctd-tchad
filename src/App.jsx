@@ -18,6 +18,7 @@ import {
   HistoriquePage,
 } from './page-institution';
 import { FlashInfoBand, ChatBubble } from './flash-chat';
+import { useLang } from './i18n';
 
 function App() {
   const getInitialRoute = () => {
@@ -35,7 +36,7 @@ function App() {
   const [tenderId, setTenderId] = useState(getInitialParam('id'));
   const [contrast, setContrast] = useState('normal');
   const [textSize, setTextSize] = useState('base');
-  const [lang, setLang] = useState('FR');
+  const { lang, setLang } = useLang();
 
   useEffect(() => { document.documentElement.setAttribute('data-contrast', contrast); }, [contrast]);
   useEffect(() => { document.documentElement.setAttribute('data-text', textSize); }, [textSize]);

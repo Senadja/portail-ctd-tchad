@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { Button } from "@admin/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { ConfirmDialog } from "@admin/components/admin/ConfirmDialog";
+import { ErrorState } from "@admin/components/admin/ErrorState";
 
 interface MediaFile {
   id: string;
@@ -41,8 +43,9 @@ const AdminMedias = () => {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [copied, setCopied] = useState<string | null>(null);
   const [selected, setSelected] = useState<MediaFile | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MediaFile | null>(null);
 
-  const { data: files = [], isLoading } = useQuery<MediaFile[]>({
+  const { data: files = [], isLoading, isError, refetch } = useQuery<MediaFile[]>({
     queryKey: ["media-page", filter, search],
     queryFn: () =>
       api.get("/media", { params: { type: filter, search: search || undefined } }).then((r) => r.data),
@@ -72,6 +75,7 @@ const AdminMedias = () => {
       queryClient.invalidateQueries({ queryKey: ["media-page"] });
       queryClient.invalidateQueries({ queryKey: ["media"] });
       setSelected(null);
+      setDeleteTarget(null);
       toast({ title: "Fichier supprimé" });
     },
     onError: () => toast({ title: "Erreur suppression", variant: "destructive" }),
@@ -193,11 +197,22 @@ const AdminMedias = () => {
             <div className="flex items-center justify-center py-24">
               <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
             </div>
+          ) : isError ? (
+            <ErrorState onRetry={refetch} />
           ) : files.length === 0 ? (
             <div className="text-center py-24 text-gray-400">
               <ImageIcon className="w-16 h-16 mx-auto mb-4 opacity-20" />
-              <p className="font-medium">Aucun fichier trouvé</p>
-              <p className="text-sm mt-1">Uploadez votre premier fichier ci-dessus</p>
+              {search || filter !== "all" ? (
+                <>
+                  <p className="font-medium">Aucun résultat</p>
+                  <p className="text-sm mt-1">Aucun fichier ne correspond à votre recherche ou filtre</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium">Aucun fichier trouvé</p>
+                  <p className="text-sm mt-1">Uploadez votre premier fichier ci-dessus</p>
+                </>
+              )}
             </div>
           ) : view === "grid" ? (
             <motion.div
@@ -321,11 +336,7 @@ const AdminMedias = () => {
                   variant="outline"
                   size="sm"
                   className="w-full gap-2 rounded-xl h-8 text-xs border-red-200 text-red-600 hover:bg-red-50"
-                  onClick={() => {
-                    if (confirm(`Supprimer "${selected.filename}" ?`)) {
-                      deleteMutation.mutate(selected.id);
-                    }
-                  }}
+                  onClick={() => setDeleteTarget(selected)}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   Supprimer
@@ -335,6 +346,17 @@ const AdminMedias = () => {
           )}
         </AnimatePresence>
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Supprimer ce fichier ?"
+        description={`Le fichier "${deleteTarget?.filename}" sera définitivement supprimé. Cette action est irréversible.`}
+        confirmLabel="Supprimer"
+        onConfirm={() => { if (deleteTarget) deleteMutation.mutate(deleteTarget.id); }}
+        loading={deleteMutation.isPending}
+        danger
+      />
     </div>
   );
 };

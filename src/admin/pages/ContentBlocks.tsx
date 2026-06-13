@@ -19,6 +19,7 @@ import {
   useSortable, arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { ErrorState } from "@admin/components/admin/ErrorState";
 import { PARTNERS, PROJECTS, KEY_FIGURES, MISSIONS_CTD, SERVICES } from "../../data";
 
 // ── Types ──────────────────────────────────────────────────────────────
@@ -82,7 +83,7 @@ const ContentBlocks = () => {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const { data: settings, isLoading } = useQuery({
+  const { data: settings, isLoading, isError, refetch } = useQuery({
     queryKey: ["settings"],
     queryFn: () => api.get("/settings").then(r => r.data),
   });
@@ -115,10 +116,17 @@ const ContentBlocks = () => {
       toast({ title: "Contenus enregistrés", description: "Les données du site ont été mises à jour." });
       setDirty(false);
     },
+    onError: () => {
+      toast({ title: "Erreur", description: "L'enregistrement a échoué.", variant: "destructive" });
+    },
   });
 
   if (isLoading) {
     return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-gray-300" /></div>;
+  }
+
+  if (isError) {
+    return <ErrorState onRetry={refetch} />;
   }
 
   // --- Handlers de Drag & Drop ---

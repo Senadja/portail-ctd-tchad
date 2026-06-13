@@ -329,7 +329,6 @@ const AdminParametres = () => {
           return parsed.length > 0 ? parsed : FLASH_INFOS;
         } catch { return FLASH_INFOS; }
       })(),
-      })(),
     });
     setDirty(false);
   }, [settings]);
@@ -555,7 +554,10 @@ const AdminParametres = () => {
               <Field label="Texte de description">
                 <Textarea value={form.aboutDescription} onChange={set("aboutDescription")} rows={5} placeholder="Paragraphe de présentation de la CTD…" className="resize-none leading-relaxed" />
               </Field>
-              
+              <Field label="Libellé du bouton (CTA)" hint="Texte du bouton affiché sous la description (ex : Découvrir la CTD).">
+                <Input value={form.aboutCtaLabel} onChange={set("aboutCtaLabel")} placeholder="Découvrir la CTD" className="h-11" />
+              </Field>
+
               {/* Pilars Manager */}
               <div className="mt-8 space-y-4">
                 <div className="flex items-center justify-between">

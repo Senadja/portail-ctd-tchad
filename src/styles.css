@@ -2146,7 +2146,7 @@ h1, h2, h3, h4 {
 /* ===== Projets ===== */
 .projects-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
 }
 .project-card {
@@ -3026,3 +3026,17 @@ h1, h2, h3, h4 {
     opacity: 0.04;
   }
 }
+
+/* ─── Support RTL (arabe) ──────────────────────────────────────────────
+   Activé via dir="rtl" sur <html> (posé par src/i18n.jsx). Règles de base ;
+   le réglage fin du RTL pourra être affiné ensuite. */
+html[dir="rtl"] body { text-align: right; }
+html[dir="rtl"] .news-toolbar,
+html[dir="rtl"] .filters,
+html[dir="rtl"] .project-head,
+html[dir="rtl"] .project-meta { flex-direction: row-reverse; }
+html[dir="rtl"] .skip-link { left: auto; right: 8px; }
+/* Garder à gauche les contenus intrinsèquement LTR (références, dates, emails, monospace) */
+html[dir="rtl"] .mono,
+html[dir="rtl"] code,
+html[dir="rtl"] [data-no-translate] { direction: ltr; unicode-bidi: embed; }

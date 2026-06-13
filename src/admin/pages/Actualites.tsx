@@ -10,6 +10,9 @@ import { Plus, Search, Edit2, Trash2, X, Loader2, Eye, EyeOff, Newspaper, ImageI
 import { useToast } from "@admin/hooks/use-toast";
 import { RichEditor } from "@admin/components/admin/RichEditor";
 import { MediaPickerModal } from "@admin/components/admin/MediaPickerModal";
+import { PageHeader } from "@admin/components/admin/PageHeader";
+import { EmptyState } from "@admin/components/admin/EmptyState";
+import { ErrorState } from "@admin/components/admin/ErrorState";
 
 interface Article {
   id: string;
@@ -53,7 +56,7 @@ const AdminActualites = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  const { data: articles = [], isLoading } = useQuery<Article[]>({
+  const { data: articles = [], isLoading, isError, refetch } = useQuery<Article[]>({
     queryKey: ["articles"],
     queryFn: () => api.get("/articles").then(r => r.data),
   });
@@ -67,6 +70,7 @@ const AdminActualites = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: FormState }) => api.put(`/articles/${id}`, data),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["articles"] }); toast({ title: "Article mis à jour" }); setDrawerOpen(false); },
+    onError: () => toast({ title: "Erreur", description: "La mise à jour a échoué.", variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
@@ -123,20 +127,23 @@ const AdminActualites = () => {
   return (
     <div className="space-y-6 flex-1 flex flex-col">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">À la Une — Articles</h1>
-          <p className="text-gray-500 text-sm mt-1">
+      <PageHeader
+        icon={<Newspaper className="w-5 h-5" />}
+        title="Actualités"
+        description={
+          <>
             <span className="font-semibold text-emerald-600">{articles.filter(a => a.published).length}</span> publiés
             &nbsp;·&nbsp;
             <span className="font-semibold text-gray-400">{articles.filter(a => !a.published).length}</span> brouillons
-          </p>
-        </div>
-        <Button onClick={openCreate} className="gap-2 bg-[#0D1F35] hover:bg-[#0D1F35]/90 rounded-xl h-10 shadow-sm">
-          <Plus className="w-4 h-4" />
-          Nouvel article
-        </Button>
-      </div>
+          </>
+        }
+        actions={
+          <Button onClick={openCreate} className="gap-2 bg-[#0D1F35] hover:bg-[#0D1F35]/90 rounded-xl h-10 shadow-sm">
+            <Plus className="w-4 h-4" />
+            Nouvel article
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -160,14 +167,31 @@ const AdminActualites = () => {
       {/* Table */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-gray-300" /></div>
+      ) : isError ? (
+        <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm flex-1 flex flex-col">
+          <ErrorState onRetry={refetch} />
+        </div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm flex-1 flex flex-col">
           {filtered.length === 0 ? (
-            <div className="py-16 text-center">
-              <Newspaper className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-400 font-medium">Aucun article trouvé</p>
-              <p className="text-gray-300 text-sm mt-1">Modifiez vos filtres ou créez un nouveau contenu</p>
-            </div>
+            search || filterPub !== "all" ? (
+              <EmptyState
+                icon={<Search className="w-7 h-7" />}
+                title="Aucun résultat"
+                description="Aucun article ne correspond à votre recherche."
+              />
+            ) : (
+              <EmptyState
+                icon={<Newspaper className="w-7 h-7" />}
+                title="Aucun article"
+                action={
+                  <Button onClick={openCreate} className="gap-2 bg-[#0D1F35] hover:bg-[#0D1F35]/90 rounded-xl h-10 shadow-sm">
+                    <Plus className="w-4 h-4" />
+                    Nouvel article
+                  </Button>
+                }
+              />
+            )
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

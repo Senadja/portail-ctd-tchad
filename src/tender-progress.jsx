@@ -4,7 +4,7 @@ import React from 'react';
  * Composant de progression circulaire intelligent pour les Appels d'Offres
  * Calcule l'état visuel en fonction des dates de début et de fin.
  */
-export const TenderRadialProgress = ({ stages = [], fallbackProgress = 0, fallbackColor = '#10b981', size = 80, strokeWidth = 6 }) => {
+export const TenderRadialProgress = ({ stages = [], fallbackProgress = 0, fallbackColor = '#10b981', size = 80, strokeWidth = 6, textColor = 'white', trackColor = 'rgba(255,255,255,0.1)', color = null }) => {
   const center = size / 2;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -18,12 +18,12 @@ export const TenderRadialProgress = ({ stages = [], fallbackProgress = 0, fallba
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
           <circle
             cx={center} cy={center} r={radius}
-            fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={strokeWidth}
+            fill="none" stroke={trackColor} strokeWidth={strokeWidth}
           />
           <circle
             cx={center} cy={center} r={radius}
             fill="none"
-            stroke={fallbackColor}
+            stroke={color || fallbackColor}
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={offset}
@@ -34,7 +34,7 @@ export const TenderRadialProgress = ({ stages = [], fallbackProgress = 0, fallba
         <div style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: size * 0.22, fontWeight: 'bold', color: 'white'
+          fontSize: size * 0.22, fontWeight: 'bold', color: textColor
         }}>
           {Math.round(fallbackProgress)}%
         </div>
@@ -69,6 +69,7 @@ export const TenderRadialProgress = ({ stages = [], fallbackProgress = 0, fallba
   
   if (totalProgress >= 100) strokeColor = '#10b981'; // Vert si fini
   else if (currentStage && now > new Date(currentStage.end)) strokeColor = '#ef4444'; // Rouge si retard
+  if (color) strokeColor = color; // Couleur de la phase active (statut automatique)
 
   return (
     <div className="radial-progress-container" style={{ position: 'relative', width: size, height: size }}>
@@ -76,7 +77,7 @@ export const TenderRadialProgress = ({ stages = [], fallbackProgress = 0, fallba
         {/* Cercle de fond */}
         <circle
           cx={center} cy={center} r={radius}
-          fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={strokeWidth}
+          fill="none" stroke={trackColor} strokeWidth={strokeWidth}
         />
         {/* Cercle de progression */}
         <circle

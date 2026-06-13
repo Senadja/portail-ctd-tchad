@@ -8,6 +8,8 @@ import { Label } from "@admin/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@admin/components/ui/select";
 import { Plus, Search, Trash2, X, FileText, Loader2, Upload, Download, FileCheck } from "lucide-react";
 import { useToast } from "@admin/hooks/use-toast";
+import { EmptyState } from "@admin/components/admin/EmptyState";
+import { ErrorState } from "@admin/components/admin/ErrorState";
 
 interface Document {
   id: string;
@@ -49,7 +51,7 @@ const AdminDocuments = () => {
   const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
   const [form, setForm] = useState({ title: "", category: "Textes", description: "" });
 
-  const { data: documents = [], isLoading } = useQuery<Document[]>({
+  const { data: documents = [], isLoading, isError, refetch } = useQuery<Document[]>({
     queryKey: ["documents"],
     queryFn: () => api.get("/documents").then(r => r.data),
   });
@@ -63,6 +65,7 @@ const AdminDocuments = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.delete(`/documents/${id}`),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["documents"] }); toast({ title: "Document supprimé" }); setDeleteTarget(null); },
+    onError: (e: any) => toast({ title: "Erreur de suppression", description: e.response?.data?.message || "Le document n'a pas pu être supprimé.", variant: "destructive" }),
   });
 
   const openCreate = () => { setForm({ title: "", category: "Textes", description: "" }); setFile(null); setDrawerOpen(true); };
@@ -94,6 +97,8 @@ const AdminDocuments = () => {
   });
 
   const baseUrl = api.defaults.baseURL?.replace("/api", "") || "";
+
+  const hasFilters = search.trim() !== "" || filterCat !== "all";
 
   return (
     <div className="space-y-6 flex-1 flex flex-col">
@@ -128,13 +133,30 @@ const AdminDocuments = () => {
       {/* Table */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-gray-300" /></div>
+      ) : isError ? (
+        <ErrorState onRetry={refetch} />
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm flex-1 flex flex-col">
           {filtered.length === 0 ? (
-            <div className="py-16 text-center">
-              <FileText className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-400 font-medium">Aucun document trouvé</p>
-            </div>
+            hasFilters ? (
+              <EmptyState
+                icon={<FileText />}
+                title="Aucun résultat"
+                description="Aucun document ne correspond à votre recherche ou à ce filtre."
+              />
+            ) : (
+              <EmptyState
+                icon={<FileText />}
+                title="Aucun document"
+                description="Commencez par ajouter un premier document officiel."
+                action={
+                  <Button onClick={openCreate} className="gap-2 bg-[#0D1F35] hover:bg-[#0D1F35]/90 rounded-xl h-10 shadow-sm">
+                    <Plus className="w-4 h-4" />
+                    Ajouter un document
+                  </Button>
+                }
+              />
+            )
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

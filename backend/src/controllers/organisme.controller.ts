@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma';
+import prisma from '../lib/prisma';
 
 // Get all organismes (returns a flat list, but we can structure it in the frontend or include children)
 export const getOrganismes = async (req: Request, res: Response) => {

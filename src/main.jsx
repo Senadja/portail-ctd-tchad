@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import AdminApp from './admin/AdminApp.tsx'
+import { LangProvider } from './i18n.jsx'
 
 import './styles.css'
 import './ctd.css'
@@ -12,7 +13,7 @@ const isAdmin = window.location.pathname.startsWith('/admin')
 
 root.render(
   <React.StrictMode>
-    {isAdmin ? <AdminApp /> : <App />}
+    {isAdmin ? <AdminApp /> : <LangProvider><App /></LangProvider>}
   </React.StrictMode>,
 )
 

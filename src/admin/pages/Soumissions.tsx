@@ -12,6 +12,7 @@ import {
   ArrowRight, Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ErrorState } from "@admin/components/admin/ErrorState";
 
 // ── Types ────────────────────────────────────────────────────────
 interface Tender {
@@ -93,7 +94,7 @@ const AdminSoumissions = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Fetch all tenders (avec leurs soumissions via query séparée)
-  const { data: tenders = [], isLoading } = useQuery<Tender[]>({
+  const { data: tenders = [], isLoading, isError, refetch } = useQuery<Tender[]>({
     queryKey: ["tenders-admin"],
     queryFn: () => api.get("/tenders").then(r => {
       const data = r.data;
@@ -102,7 +103,7 @@ const AdminSoumissions = () => {
   });
 
   // Fetch soumissions d'un AO précis
-  const { data: submissions = [], isLoading: loadingSubs } = useQuery<Submission[]>({
+  const { data: submissions = [], isLoading: loadingSubs, isError: subsError, refetch: refetchSubs } = useQuery<Submission[]>({
     queryKey: ["submissions", selectedTender?.id],
     queryFn: () => api.get(`/tenders/${selectedTender!.id}/submissions`).then(r => r.data),
     enabled: !!selectedTender,
@@ -156,6 +157,8 @@ const AdminSoumissions = () => {
 
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-gray-300" /></div>
+        ) : isError ? (
+          <ErrorState onRetry={refetch} />
         ) : (
           <div className="grid gap-3">
             {filteredTenders.map(t => (
@@ -260,6 +263,8 @@ const AdminSoumissions = () => {
       {/* Content */}
       {loadingSubs ? (
         <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-gray-300" /></div>
+      ) : subsError ? (
+        <ErrorState onRetry={refetchSubs} />
       ) : filteredSubs.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
           <FileText className="w-12 h-12 mx-auto mb-3 text-gray-200" />

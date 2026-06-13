@@ -18,7 +18,9 @@ import {
 } from "@admin/components/ui/dropdown-menu";
 import logoChad from "/logo-chad.png";
 
-const navGroups = [
+type NavItem = { icon: any; label: string; href: string; badge?: boolean };
+
+const navGroups: { label: string; items: NavItem[] }[] = [
   {
     label: "Vue d'ensemble",
     items: [
@@ -26,21 +28,38 @@ const navGroups = [
     ],
   },
   {
-    label: "Contenu éditorial",
+    label: "Contenu du site",
     items: [
-      { icon: FolderTree,   label: "Organigramme",      href: "/admin/organigramme" },
-      { icon: Layout,       label: "Blocs de contenu",  href: "/admin/blocks" },
-      { icon: Newspaper,    label: "À la Une",          href: "/admin/actualites" },
-      { icon: Gavel,        label: "Appels d'offres",   href: "/admin/appels-offres" },
-      { icon: ImageIcon,    label: "Médiathèque",       href: "/admin/medias" },
+      { icon: UserCircle, label: "Mot du Président",      href: "/admin/president" },
+      { icon: Newspaper,  label: "Actualités",            href: "/admin/actualites" },
+      { icon: Layout,     label: "Blocs page d'accueil",  href: "/admin/blocks" },
+      { icon: FolderTree, label: "Organigramme",          href: "/admin/organigramme" },
     ],
   },
   {
-    label: "Gestion",
+    label: "Appels d'offres",
     items: [
-      { icon: ClipboardList, label: "Formulaires",  href: "/admin/formulaires", badge: true },
-      { icon: FileCheck,     label: "Soumissions AO",href: "/admin/soumissions" },
-      { icon: Settings,      label: "Paramètres",   href: "/admin/parametres" },
+      { icon: Gavel,     label: "Avis d'appels d'offres", href: "/admin/appels-offres" },
+      { icon: FileCheck, label: "Soumissions reçues",     href: "/admin/soumissions" },
+    ],
+  },
+  {
+    label: "Demandes reçues",
+    items: [
+      { icon: ClipboardList, label: "Formulaires", href: "/admin/formulaires", badge: true },
+    ],
+  },
+  {
+    label: "Bibliothèque",
+    items: [
+      { icon: FileText,  label: "Documents",   href: "/admin/documents" },
+      { icon: ImageIcon, label: "Médiathèque", href: "/admin/medias" },
+    ],
+  },
+  {
+    label: "Configuration",
+    items: [
+      { icon: Settings, label: "Réglages du site", href: "/admin/parametres" },
     ],
   },
 ];
@@ -79,6 +98,7 @@ const SidebarContent = ({
   onClose?: () => void;
   newFormsCount: number;
 }) => {
+  const { pathname } = useLocation();
   return (
     <div className="flex flex-col h-full">
       {/* Brand */}
@@ -109,7 +129,7 @@ const SidebarContent = ({
                 <NavLink
                   key={item.href}
                   item={item}
-                  isActive={location.pathname === item.href}
+                  isActive={pathname === item.href}
                   badge={item.badge ? newFormsCount : undefined}
                   onClick={onClose}
                 />
@@ -123,7 +143,7 @@ const SidebarContent = ({
 };
 
 const AdminLayout = () => {
-  const { admin, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -214,10 +234,10 @@ const AdminLayout = () => {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-2 hover:bg-gray-50 p-1.5 rounded-lg transition-colors outline-none">
                   <div className="w-10 h-10 rounded-full bg-[#0D1F35] flex items-center justify-center text-[#FECB00] text-sm font-black shrink-0">
-                    {admin?.username?.charAt(0)?.toUpperCase() || "A"}
+                    {user?.username?.charAt(0)?.toUpperCase() || "A"}
                   </div>
                   <div className="hidden md:block text-left min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate max-w-[150px]">{admin?.username || "Administrateur"}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate max-w-[150px]">{user?.username || "Administrateur"}</p>
                   </div>
                   <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
                 </button>
@@ -225,8 +245,8 @@ const AdminLayout = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{admin?.username || "Administrateur"}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{admin?.email || ""}</p>
+                    <p className="text-sm font-medium leading-none">{user?.username || "Administrateur"}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email || ""}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

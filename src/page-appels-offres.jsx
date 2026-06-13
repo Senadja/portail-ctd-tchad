@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { getSettings, getTenders, useApi } from './api';
 import { Icon } from './icons';
 import { TenderRadialProgress } from './tender-progress';
+import { getEffectiveStatus } from './lib/tenderStatus';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:5015';
 
@@ -97,10 +98,9 @@ export function AppelsOffresPage({ go, openTender }) {
 
         <div className="projects-grid" style={{marginTop:8}}>
           {filtered.map((t, i) => {
-            const st = customStatuses.find(s => s.label === t.status) || customStatuses[0];
+            const eff = getEffectiveStatus(t, customStatuses);
             const expiring = isExpiringSoon(t.deadline);
-            let stages = [];
-            try { stages = t.customStatuses ? JSON.parse(t.customStatuses) : []; } catch {}
+            const stages = eff.phases;
 
             return (
               <article key={t.id || i} className="project-card"
@@ -108,8 +108,8 @@ export function AppelsOffresPage({ go, openTender }) {
                 style={{cursor: 'pointer'}}
               >
                 <div className="project-head">
-                  <span className="status-pill progress" style={{ backgroundColor: st?.color + '20', color: st?.color || '#333' }}>
-                    {t.status || 'En cours'}
+                  <span className="status-pill progress" style={{ backgroundColor: eff.color + '20', color: eff.color || '#333' }}>
+                    {eff.label || 'En cours'}
                   </span>
                   <span className="project-period" style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>
                     {t.reference || `AO-2026-00${i+1}`}
@@ -122,10 +122,10 @@ export function AppelsOffresPage({ go, openTender }) {
                 
                 {/* Progression en cercle */}
                 <div className="project-progress-circle">
-                  <TenderRadialProgress stages={stages} fallbackProgress={st?.percentage || 0} fallbackColor={st?.color || '#10b981'} size={84} strokeWidth={7} />
+                  <TenderRadialProgress stages={stages} fallbackProgress={eff.percentage || 0} fallbackColor={eff.color || '#10b981'} color={eff.autoStatus ? eff.color : null} size={84} strokeWidth={7} textColor="#0D1F35" trackColor="rgba(13,31,53,0.10)" />
                   <div className="progress-circle-label">
                     <span>Avancement</span>
-                    <strong>{st?.label}</strong>
+                    <strong>{eff.label}</strong>
                   </div>
                 </div>
 

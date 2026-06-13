@@ -5,6 +5,9 @@ import { Button } from "@admin/components/ui/button";
 import { Input } from "@admin/components/ui/input";
 import { Label } from "@admin/components/ui/label";
 import { Plus, Edit2, Trash2, FolderTree, ArrowRight, Loader2, Save } from "lucide-react";
+import { useToast } from "@admin/hooks/use-toast";
+import { ConfirmDialog } from "@admin/components/admin/ConfirmDialog";
+import { ErrorState } from "@admin/components/admin/ErrorState";
 
 interface Organisme {
   id: string;
@@ -17,11 +20,13 @@ interface Organisme {
 
 const OrganigrammeAdmin = () => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: "", description: "", parentId: "", order: 0 });
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Organisme | null>(null);
 
-  const { data: tree = [], isLoading } = useQuery<Organisme[]>({
+  const { data: tree = [], isLoading, isError, refetch } = useQuery<Organisme[]>({
     queryKey: ["organismes-tree"],
     queryFn: () => api.get("/organismes/tree").then(res => res.data),
   });
@@ -44,6 +49,10 @@ const OrganigrammeAdmin = () => {
       setIsFormOpen(false);
       setEditingId(null);
       setFormData({ name: "", description: "", parentId: "", order: 0 });
+      toast({ title: "Organisme enregistré" });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "L'enregistrement de l'organisme a échoué.", variant: "destructive" });
     },
   });
 
@@ -52,6 +61,11 @@ const OrganigrammeAdmin = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["organismes-tree"] });
       queryClient.invalidateQueries({ queryKey: ["organismes-flat"] });
+      setDeleteTarget(null);
+      toast({ title: "Organisme supprimé" });
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "La suppression de l'organisme a échoué.", variant: "destructive" });
     },
   });
 
@@ -66,10 +80,8 @@ const OrganigrammeAdmin = () => {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Êtes-vous sûr de vouloir supprimer cet organisme ? Les sous-organismes seront rattachés à la racine.")) {
-      deleteMutation.mutate(id);
-    }
+  const handleDelete = (org: Organisme) => {
+    setDeleteTarget(org);
   };
 
   const renderTree = (nodes: Organisme[], depth = 0) => {
@@ -111,7 +123,7 @@ const OrganigrammeAdmin = () => {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => handleDelete(node.id)}
+                  onClick={() => handleDelete(node)}
                   className="h-8 px-3 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
                 >
                   <Trash2 className="w-3.5 h-3.5 mr-2" />
@@ -133,6 +145,10 @@ const OrganigrammeAdmin = () => {
 
   if (isLoading) {
     return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>;
+  }
+
+  if (isError) {
+    return <ErrorState onRetry={refetch} />;
   }
 
   return (
@@ -223,6 +239,17 @@ const OrganigrammeAdmin = () => {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Supprimer cet organisme ?"
+        description="Les sous-organismes seront rattachés à la racine."
+        confirmLabel="Supprimer"
+        onConfirm={() => { if (deleteTarget) deleteMutation.mutate(deleteTarget.id); }}
+        loading={deleteMutation.isPending}
+        danger
+      />
     </div>
   );
 };
