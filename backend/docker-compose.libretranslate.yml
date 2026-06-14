@@ -1,0 +1,37 @@
+# LibreTranslate auto-hébergé — moteur de traduction LOCAL (FR / EN / AR).
+# Traduction ~200 ms au lieu de ~7 s via MyMemory : pas de dépendance internet,
+# pas de quota, pas de timeout de passerelle Vercel. ~1,5 Go de RAM requis.
+#
+# 1) Lancer :        docker compose -f docker-compose.libretranslate.yml up -d
+#    (premier démarrage : téléchargement des modèles, quelques minutes)
+# 2) Configurer le backend CTD (.env ou environment du conteneur api) :
+#       TRANSLATE_PROVIDER=libretranslate
+#       LIBRETRANSLATE_URL=http://libretranslate:5000   # si même réseau Docker
+#       # sinon, depuis l'hôte :  LIBRETRANSLATE_URL=http://127.0.0.1:5000
+# 3) Redémarrer le backend.
+#
+# Test :  curl -s -X POST http://127.0.0.1:5000/translate \
+#           -H 'Content-Type: application/json' \
+#           -d '{"q":"Bonjour le monde","source":"fr","target":"ar","format":"text"}'
+
+services:
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: ctd-libretranslate
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      # Ne charger que FR/EN/AR -> démarrage plus rapide, moins de RAM
+      - LT_LOAD_ONLY=en,fr,ar
+      - LT_DISABLE_WEB_UI=true
+    volumes:
+      - lt_models:/home/libretranslate/.local/share/argos-translate
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/languages || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  lt_models:

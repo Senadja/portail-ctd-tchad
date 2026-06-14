@@ -71,7 +71,7 @@ let backoff = 0;
 
 async function postTranslate(list, target) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 10000);
+  const timer = setTimeout(() => controller.abort(), 12000);
   try {
     const res = await fetch(`${API_BASE}/api/translate`, {
       method: 'POST',
@@ -94,7 +94,7 @@ async function processQueue(cores, target, onDone) {
   all.forEach((c) => inFlight.add(target + ' ' + c));
 
   const chunks = [];
-  for (let i = 0; i < all.length; i += 20) chunks.push(all.slice(i, i + 20));
+  for (let i = 0; i < all.length; i += 12) chunks.push(all.slice(i, i + 12));
   let ci = 0;
   let anyOk = false;
   let failed = false;
@@ -113,7 +113,8 @@ async function processQueue(cores, target, onDone) {
       }
     }
   };
-  await Promise.all([worker(), worker()]);
+  // UNE seule requête à la fois : la traduction ne concurrence jamais le contenu
+  await worker();
   all.forEach((c) => inFlight.delete(target + ' ' + c));
 
   if (failed) {
@@ -202,7 +203,9 @@ export function LangProvider({ children }) {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => { if (!stopped) translateDom(root, target, schedule); });
     };
-    const schedule = () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(run, 120); };
+    // 600 ms : on laisse le contenu (articles, settings...) finir de charger
+    // avant de lancer la traduction, pour ne pas entrer en concurrence avec lui.
+    const schedule = () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(run, 600); };
     schedule();
     const observer = new MutationObserver(schedule);
     observer.observe(root, { childList: true, subtree: true, characterData: true });

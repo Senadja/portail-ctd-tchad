@@ -33,7 +33,7 @@ const MYMEMORY_EMAIL = process.env.MYMEMORY_EMAIL || '';
 
 // fetch avec timeout : une requête amont qui traîne ne doit jamais bloquer
 // la réponse (sinon la passerelle Vercel renvoie 502).
-async function fetchWithTimeout(url: string, init: any = {}, ms = 4500): Promise<any> {
+async function fetchWithTimeout(url: string, init: any = {}, ms = 4000): Promise<any> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ms);
   try {
@@ -74,13 +74,15 @@ export const translate = async (req: Request, res: Response) => {
     const items: string[] = Array.isArray(q) ? q : [q];
     if (!cache[target]) cache[target] = {};
 
-    // Ne traduire que les textes inconnus (uniques), plafonnés pour garantir
-    // une réponse rapide ; le reste sera redemandé (et servi depuis le cache).
-    const unique = [...new Set(items.filter((t) => typeof t === 'string' && t && cache[target][t] == null))].slice(0, 60);
+    // Ne traduire que les textes inconnus (uniques). BUDGET de 5 s : on renvoie
+    // ce qui a pu être traduit, le reste sera redemandé (puis servi du cache).
+    // Garantit une réponse < ~9 s -> jamais de timeout de passerelle Vercel.
+    const unique = [...new Set(items.filter((t) => typeof t === 'string' && t && cache[target][t] == null))];
+    const deadline = Date.now() + 5000;
     let changed = false;
     let idx = 0;
     const worker = async () => {
-      while (idx < unique.length) {
+      while (idx < unique.length && Date.now() < deadline) {
         const text = unique[idx++];
         try {
           cache[target][text] = await translateOne(text, source, target);
