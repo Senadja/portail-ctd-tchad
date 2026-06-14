@@ -62,33 +62,68 @@ const shouldSkipNode = (node) => {
   return false;
 };
 
-/* ─── Appel GROUPÉ à notre backend (/api/translate) ─────────────────────
-   Une seule requête pour tous les textes en attente. */
+/* ─── Appel à notre backend (/api/translate), par petits lots ────────────
+   Robustesse : lots de 20, 2 requêtes max en parallèle, timeout 10 s, et
+   backoff exponentiel si le backend échoue (évite de spammer des 502). */
 const inFlight = new Set();
-async function processQueue(cores, target, onDone) {
-  const list = [...cores].filter((c) => !inFlight.has(target + ' ' + c) && getCached(target, c) == null);
-  if (!list.length) { onDone(false); return; }
-  list.forEach((c) => inFlight.add(target + ' ' + c));
+let cooldownUntil = 0; // tant que Date.now() < cooldownUntil : on n'appelle pas
+let backoff = 0;
+
+async function postTranslate(list, target) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
   try {
     const res = await fetch(`${API_BASE}/api/translate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ q: list, target }),
+      signal: controller.signal,
     });
-    if (res.ok) {
-      const data = await res.json();
-      const translations = (data && data.translations) || [];
-      list.forEach((src, i) => {
-        const val = translations[i];
-        if (val && val !== src) setCached(target, src, val);
-      });
-    }
-  } catch {
-    /* repli : on garde le français */
+    if (!res.ok) throw new Error('http ' + res.status);
+    const data = await res.json();
+    return (data && data.translations) || [];
   } finally {
-    list.forEach((c) => inFlight.delete(target + ' ' + c));
+    clearTimeout(timer);
   }
-  onDone(true);
+}
+
+async function processQueue(cores, target, onDone) {
+  if (Date.now() < cooldownUntil) { onDone(false); return; }
+  const all = [...cores].filter((c) => !inFlight.has(target + ' ' + c) && getCached(target, c) == null);
+  if (!all.length) { onDone(false); return; }
+  all.forEach((c) => inFlight.add(target + ' ' + c));
+
+  const chunks = [];
+  for (let i = 0; i < all.length; i += 20) chunks.push(all.slice(i, i + 20));
+  let ci = 0;
+  let anyOk = false;
+  let failed = false;
+  const worker = async () => {
+    while (ci < chunks.length && !failed) {
+      const chunk = chunks[ci++];
+      try {
+        const translations = await postTranslate(chunk, target);
+        chunk.forEach((src, i) => {
+          const val = translations[i];
+          if (val && val !== src) setCached(target, src, val);
+        });
+        anyOk = true;
+      } catch {
+        failed = true; // backend down/lent : on arrête et on met en pause
+      }
+    }
+  };
+  await Promise.all([worker(), worker()]);
+  all.forEach((c) => inFlight.delete(target + ' ' + c));
+
+  if (failed) {
+    backoff = Math.min(backoff ? backoff * 2 : 15000, 120000);
+    cooldownUntil = Date.now() + backoff;
+  } else {
+    backoff = 0;
+    cooldownUntil = 0;
+  }
+  onDone(anyOk);
 }
 
 const splitWs = (raw) => {

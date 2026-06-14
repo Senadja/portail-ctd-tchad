@@ -31,9 +31,21 @@ const LIBRE_URL = (process.env.LIBRETRANSLATE_URL || 'http://localhost:5000').re
 const LIBRE_KEY = process.env.LIBRETRANSLATE_API_KEY || '';
 const MYMEMORY_EMAIL = process.env.MYMEMORY_EMAIL || '';
 
+// fetch avec timeout : une requête amont qui traîne ne doit jamais bloquer
+// la réponse (sinon la passerelle Vercel renvoie 502).
+async function fetchWithTimeout(url: string, init: any = {}, ms = 4500): Promise<any> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function translateOne(text: string, source: string, target: string): Promise<string> {
   if (PROVIDER === 'libretranslate') {
-    const res = await fetch(`${LIBRE_URL}/translate`, {
+    const res = await fetchWithTimeout(`${LIBRE_URL}/translate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ q: text, source, target, format: 'text', api_key: LIBRE_KEY }),
@@ -46,7 +58,7 @@ async function translateOne(text: string, source: string, target: string): Promi
   // MyMemory (défaut)
   const email = MYMEMORY_EMAIL ? `&de=${encodeURIComponent(MYMEMORY_EMAIL)}` : '';
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}${email}`;
-  const res = await fetch(url);
+  const res = await fetchWithTimeout(url);
   if (!res.ok) throw new Error('mymemory http ' + res.status);
   const data: any = await res.json();
   const out = data && data.responseData && data.responseData.translatedText;
@@ -62,8 +74,9 @@ export const translate = async (req: Request, res: Response) => {
     const items: string[] = Array.isArray(q) ? q : [q];
     if (!cache[target]) cache[target] = {};
 
-    // Ne traduire que les textes inconnus (uniques)
-    const unique = [...new Set(items.filter((t) => typeof t === 'string' && t && cache[target][t] == null))];
+    // Ne traduire que les textes inconnus (uniques), plafonnés pour garantir
+    // une réponse rapide ; le reste sera redemandé (et servi depuis le cache).
+    const unique = [...new Set(items.filter((t) => typeof t === 'string' && t && cache[target][t] == null))].slice(0, 60);
     let changed = false;
     let idx = 0;
     const worker = async () => {
